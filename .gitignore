@@ -1,0 +1,34 @@
+# Next.js build output
+.next/
+out/
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Environment variables
+.env
+.env*.local
+.env.production
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# System & IDE files
+.DS_Store
+*.pem
+.vscode/
+.idea/
+*.tsbuildinfo
+
+# Vercel
+.vercel
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
