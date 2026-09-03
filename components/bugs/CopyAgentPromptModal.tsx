@@ -33,13 +33,6 @@ export function CopyAgentPromptModal({
     setTimeout(() => setCopied(false), 2000)
   }
 
-  function handleCopyAndClose() {
-    handleCopy()
-    setTimeout(() => {
-      onClose()
-    }, 400)
-  }
-
   return (
     <Modal
       show={show}
@@ -139,21 +132,13 @@ export function CopyAgentPromptModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-zinc-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xs text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium py-1.5 px-3 rounded-lg transition"
-          >
-            Tutup
-          </button>
+        <div className="flex items-center justify-end pt-2 border-t border-slate-100 dark:border-zinc-800">
           <Button
             type="button"
             variant="primary"
-            onClick={handleCopyAndClose}
-            icon={copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            onClick={onClose}
           >
-            <span>{copied ? 'Sudah Disalin' : 'Salin & Tutup'}</span>
+            <span>Tutup</span>
           </Button>
         </div>
       </div>
