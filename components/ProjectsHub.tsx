@@ -55,8 +55,6 @@ export function ProjectsHub({
     }
   }
 
-  const generalStats = getProjectStats(null)
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Global Status Bar */}
@@ -114,7 +112,7 @@ export function ProjectsHub({
             Workspaces & Projects
           </h3>
           <span className="text-xs font-mono text-slate-400 dark:text-zinc-500">
-            ({projects.length + 1})
+            ({projects.length})
           </span>
         </div>
 
@@ -145,13 +143,6 @@ export function ProjectsHub({
             Configure git repository, tech stack, and test command
           </p>
         </div>
-
-        {/* General / Unassigned Card */}
-        <ProjectCard
-          project={null}
-          stats={generalStats}
-          onSelect={() => onSelectProject(null)}
-        />
 
         {/* User Projects Cards */}
         {projects.map((proj) => {
