@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProjects, getBugs } from '@/app/actions'
+import { getApiKeys } from '@/app/integrations/actions'
 import { ProjectsPageClient } from '@/components/projects/ProjectsPageClient'
 import { redirect } from 'next/navigation'
 
@@ -17,11 +18,13 @@ export default async function ProjectsPage() {
 
   let projects: any[] = []
   let bugs: any[] = []
+  let apiKeys: any[] = []
 
   try {
-    const [p, b] = await Promise.all([getProjects(), getBugs()])
+    const [p, b, keys] = await Promise.all([getProjects(), getBugs(), getApiKeys()])
     projects = p
     bugs = b
+    apiKeys = keys
   } catch (err) {
     console.error('Failed to load projects page data:', err)
   }
@@ -31,6 +34,7 @@ export default async function ProjectsPage() {
       initialProjects={projects}
       initialBugs={bugs}
       userEmail={user.email}
+      hasApiKeys={apiKeys.length > 0}
     />
   )
 }

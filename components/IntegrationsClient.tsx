@@ -36,6 +36,8 @@ export default function IntegrationsClient({
   isGuest = false,
 }: IntegrationsClientProps) {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>(initialApiKeys)
+  const [clientProjects, setClientProjects] = useState<Project[]>(projects)
+  const [clientBugs, setClientBugs] = useState<BugItem[]>(bugs)
   const [keyName, setKeyName] = useState('')
   const [isCreatingKey, setIsCreatingKey] = useState(false)
   const [createdSecret, setCreatedSecret] = useState<string | null>(null)
@@ -52,8 +54,30 @@ export default function IntegrationsClient({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setOriginUrl(window.location.origin)
+
+      // Fallback local storage for guest
+      if (isGuest) {
+        const localProject: Project = {
+          id: 999999,
+          uuid: 'local-scratchpad',
+          name: 'Local Scratchpad',
+          slug: 'local-scratchpad',
+          description: 'Offline local-first bug notes stored only in this browser.',
+          color: '#6366f1',
+        }
+        setClientProjects([localProject])
+
+        try {
+          const savedBugs = localStorage.getItem('local_devbug_items')
+          if (savedBugs) {
+            setClientBugs(JSON.parse(savedBugs))
+          }
+        } catch (e) {
+          console.error('Failed to read local bugs in integrations', e)
+        }
+      }
     }
-  }, [])
+  }, [isGuest])
 
   async function handleCreateKey(e: React.FormEvent) {
     e.preventDefault()
@@ -142,7 +166,7 @@ export default function IntegrationsClient({
       <Toast toast={toast} />
 
       {/* App Sidebar Component */}
-      <AppSidebar projects={projects} bugs={bugs} userEmail={userEmail} />
+      <AppSidebar projects={clientProjects} bugs={clientBugs} userEmail={userEmail} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
@@ -159,7 +183,7 @@ export default function IntegrationsClient({
                 </Link>
                 <div className="flex items-center gap-2 text-xs">
                   <Link
-                    href="/"
+                    href={isGuest ? '/' : '/project'}
                     className="font-bold text-slate-600 dark:text-zinc-400 hover:text-indigo-600 transition"
                   >
                     Projects

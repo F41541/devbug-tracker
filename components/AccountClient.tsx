@@ -111,7 +111,7 @@ export default function AccountClient({
                 </Link>
                 <div className="flex items-center gap-2 text-xs">
                   <Link
-                    href="/"
+                    href="/project"
                     className="font-bold text-slate-600 dark:text-zinc-400 hover:text-indigo-600 transition"
                   >
                     Projects

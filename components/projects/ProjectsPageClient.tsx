@@ -6,24 +6,28 @@ import { Project, BugItem } from '@/types'
 import { ProjectsHub } from '@/components/ProjectsHub'
 import { AppSidebar } from '@/components/AppSidebar'
 import { ProjectManagerModal } from '@/components/projects'
+import { ApiKeyPromptModal } from '@/components/integrations/ApiKeyPromptModal'
 import { Toast, ToastData, ToastType } from '@/components/ui/Toast'
 
 interface ProjectsPageClientProps {
   initialProjects: Project[]
   initialBugs: BugItem[]
   userEmail?: string
+  hasApiKeys?: boolean
 }
 
 export function ProjectsPageClient({
   initialProjects,
   initialBugs,
   userEmail,
+  hasApiKeys = true,
 }: ProjectsPageClientProps) {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [bugs, setBugs] = useState<BugItem[]>(initialBugs)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [showProjectModal, setShowProjectModal] = useState(false)
+  const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(!hasApiKeys)
   const [toast, setToast] = useState<ToastData | null>(null)
 
   function showToast(message: string, type: ToastType = 'success') {
@@ -89,6 +93,17 @@ export function ProjectsPageClient({
             } else {
               setProjects(updated)
             }
+          }}
+          notify={showToast}
+        />
+      )}
+
+      {showApiKeyPrompt && (
+        <ApiKeyPromptModal
+          show={showApiKeyPrompt}
+          onClose={() => setShowApiKeyPrompt(false)}
+          onKeyCreated={() => {
+            setShowApiKeyPrompt(false)
           }}
           notify={showToast}
         />
