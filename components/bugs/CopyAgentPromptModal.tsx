@@ -49,55 +49,66 @@ export function CopyAgentPromptModal({
       icon={<Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
       maxWidthClass="max-w-2xl"
     >
-      <div className="p-5 sm:p-6 space-y-5 max-h-[calc(85vh-80px)] overflow-y-auto no-scrollbar">
+      <div className="p-4 sm:p-5 space-y-3.5 max-h-[calc(85vh-70px)] overflow-y-auto no-scrollbar">
         {/* Tutorial Steps - Vertical List */}
-        <div className="space-y-2.5">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5 mb-1">
-            <Bot className="w-4 h-4 text-indigo-500" />
+        <div className="space-y-2">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+            <Bot className="w-3.5 h-3.5 text-indigo-500" />
             <span>Langkah-Langkah:</span>
           </h4>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {/* Step 1 with prompt box directly underneath */}
-            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0">
-                  <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
-                    1
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 space-y-2.5">
+              <div className="flex items-start gap-2.5 min-w-0">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+                  1
+                </span>
+                <div className="space-y-0.5 min-w-0">
+                  <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
+                    Salin Teks Prompt
                   </span>
-                  <div className="space-y-0.5 min-w-0">
-                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
-                      Salin Teks Prompt
-                    </span>
-                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                      Salin prompt XML dossier bug di bawah ini ke clipboard Anda:
-                    </p>
-                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                    Salin prompt XML dossier bug di bawah ini ke clipboard Anda:
+                  </p>
                 </div>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopy}
-                  icon={copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                  className="flex-shrink-0"
-                >
-                  <span>{copied ? 'Tersalin!' : 'Salin Prompt'}</span>
-                </Button>
               </div>
 
-              {/* Fixed Height Text Container right below Step 1 */}
-              <div className="relative rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden bg-slate-950 shadow-inner">
-                <pre className="h-44 overflow-y-auto p-3.5 text-[11px] font-mono leading-relaxed text-emerald-400 select-all whitespace-pre">
+              {/* Fixed Height Text Container with inside copy button and white background */}
+              <div className="relative rounded-xl border border-slate-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-900 shadow-2xs">
+                <div className="absolute top-2 right-2 z-10">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs ${
+                      copied
+                        ? 'bg-emerald-500 text-white border border-emerald-600'
+                        : 'bg-white/90 dark:bg-zinc-800/90 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700'
+                    }`}
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Sudah Disalin</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Salin</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <pre className="h-36 overflow-y-auto p-3 pr-24 text-[11px] font-mono leading-relaxed text-slate-800 dark:text-zinc-200 select-all whitespace-pre">
                   {promptText}
                 </pre>
               </div>
             </div>
 
             {/* Step 2 */}
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 flex items-start gap-3">
-              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 flex items-start gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
                 2
               </span>
               <div className="space-y-0.5 min-w-0">
@@ -111,8 +122,8 @@ export function CopyAgentPromptModal({
             </div>
 
             {/* Step 3 */}
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 flex items-start gap-3">
-              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 flex items-start gap-2.5">
+              <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
                 3
               </span>
               <div className="space-y-0.5 min-w-0">
@@ -132,7 +143,7 @@ export function CopyAgentPromptModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-xs text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium py-2 px-3 rounded-lg transition"
+            className="text-xs text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium py-1.5 px-3 rounded-lg transition"
           >
             Tutup
           </button>
@@ -140,9 +151,9 @@ export function CopyAgentPromptModal({
             type="button"
             variant="primary"
             onClick={handleCopyAndClose}
-            icon={copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            icon={copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
           >
-            <span>{copied ? 'Tersalin!' : 'Salin & Tutup'}</span>
+            <span>{copied ? 'Sudah Disalin' : 'Salin & Tutup'}</span>
           </Button>
         </div>
       </div>
