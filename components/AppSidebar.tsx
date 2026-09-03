@@ -151,22 +151,6 @@ export function AppSidebar({
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
               Projects
             </span>
-            {onManageProjects ? (
-              <button
-                type="button"
-                onClick={onManageProjects}
-                className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
-              >
-                + Manage
-              </button>
-            ) : (
-              <Link
-                href="/"
-                className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
-              >
-                + Manage
-              </Link>
-            )}
           </div>
           {projects.map((proj) => {
             const active =

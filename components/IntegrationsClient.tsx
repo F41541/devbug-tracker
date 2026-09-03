@@ -82,7 +82,7 @@ export default function IntegrationsClient({
   async function handleCreateKey(e: React.FormEvent) {
     e.preventDefault()
     if (isGuest) {
-      showToast('Silakan login sebagai admin untuk membuat API Key live.', 'error')
+      showToast('Please sign in as admin to create live API keys.', 'error')
       return
     }
     if (!keyName.trim()) return
@@ -103,7 +103,7 @@ export default function IntegrationsClient({
 
   async function handleDeleteKey(id: number) {
     if (isGuest) {
-      showToast('Hanya admin terautentikasi yang dapat menghapus key.', 'error')
+      showToast('Only authenticated admins can revoke API keys.', 'error')
       return
     }
     try {
@@ -216,16 +216,6 @@ export default function IntegrationsClient({
                 reporting and ticket context retrieval.
               </p>
             </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => copyText(mcpConfigJson, 'mcp')}
-              icon={<Copy className="w-3.5 h-3.5" />}
-            >
-              <span>{copiedConfig === 'mcp' ? 'Copied Config!' : 'Copy MCP Config'}</span>
-            </Button>
           </div>
 
           {/* Modal: Secret View Banner when created */}
@@ -353,13 +343,15 @@ export default function IntegrationsClient({
                       <Server className="w-3.5 h-3.5" />
                       Claude Code / Antigravity MCP Config
                     </span>
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => copyText(mcpConfigJson, 'mcp_box')}
-                      className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-mono"
+                      icon={copiedConfig === 'mcp_box' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     >
-                      {copiedConfig === 'mcp_box' ? 'Copied!' : 'Copy MCP JSON'}
-                    </button>
+                      <span>{copiedConfig === 'mcp_box' ? 'Copied' : 'Copy'}</span>
+                    </Button>
                   </div>
                   <pre className="p-2.5 bg-slate-900 rounded-lg text-[11px] font-mono text-slate-300 overflow-x-auto border border-slate-800 max-h-36">
                     {mcpConfigJson}

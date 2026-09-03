@@ -138,7 +138,7 @@ export function ProjectsHub({
               Add New Project
             </span>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 max-w-[220px] mt-0.5">
-              Guest dibatasi 1 project offline. Login admin untuk multi-project workspace.
+              Guest mode is limited to 1 local project. Sign in as admin for multi-project workspaces.
             </p>
           </div>
         )}

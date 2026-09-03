@@ -123,7 +123,7 @@ export function ProjectManagerModal({
   }
 
   async function handleDeleteProject(id: number) {
-    if (!window.confirm('Apakah Anda yakin ingin menghapus project ini?')) {
+    if (!window.confirm('Are you sure you want to delete this project?')) {
       return
     }
 
@@ -247,7 +247,7 @@ export function ProjectManagerModal({
                 <span>Delete this project</span>
               </p>
               <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                Hapus project ini beserta seluruh konfigurasi dan bug terkait.
+                Permanently delete this project along with all associated issues and configurations.
               </p>
             </div>
             <Button

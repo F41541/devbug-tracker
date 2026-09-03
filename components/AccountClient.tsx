@@ -53,9 +53,9 @@ export default function AccountClient({
     try {
       await updateAccountEmail(email)
       setCurrentEmailState(email)
-      showToast('Email login berhasil diperbarui (atau cek email konfirmasi)', 'success')
+      showToast('Login email updated successfully (or check your confirmation email)', 'success')
     } catch (err: any) {
-      showToast(err.message || 'Gagal mengubah email', 'error')
+      showToast(err.message || 'Failed to update email', 'error')
     } finally {
       setIsUpdatingEmail(false)
     }
@@ -66,12 +66,12 @@ export default function AccountClient({
     if (!password) return
 
     if (password.length < 6) {
-      showToast('Kata sandi minimal 6 karakter', 'error')
+      showToast('Password must be at least 6 characters', 'error')
       return
     }
 
     if (password !== confirmPassword) {
-      showToast('Konfirmasi kata sandi tidak cocok', 'error')
+      showToast('Password confirmation does not match', 'error')
       return
     }
 
@@ -80,9 +80,9 @@ export default function AccountClient({
       await updateAccountPassword(password, confirmPassword)
       setPassword('')
       setConfirmPassword('')
-      showToast('Kata sandi berhasil diperbarui', 'success')
+      showToast('Password updated successfully', 'success')
     } catch (err: any) {
-      showToast(err.message || 'Gagal mengubah kata sandi', 'error')
+      showToast(err.message || 'Failed to update password', 'error')
     } finally {
       setIsUpdatingPassword(false)
     }
@@ -118,7 +118,7 @@ export default function AccountClient({
                   </Link>
                   <span className="text-slate-300 dark:text-zinc-600">/</span>
                   <span className="font-bold text-slate-900 dark:text-zinc-100">
-                    Pengaturan Akun
+                    Account Settings
                   </span>
                 </div>
               </div>
@@ -147,7 +147,7 @@ export default function AccountClient({
             {createdAt && (
               <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-950 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-zinc-800">
                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>Terdaftar sejak {new Date(createdAt).toLocaleDateString()}</span>
+                <span>Joined {new Date(createdAt).toLocaleDateString()}</span>
               </div>
             )}
           </div>
@@ -161,16 +161,16 @@ export default function AccountClient({
                     <Mail className="w-4 h-4" />
                   </div>
                   <h4 className="text-sm font-bold text-slate-900 dark:text-zinc-100">
-                    Ubah Email Login
+                    Update Login Email
                   </h4>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-zinc-400">
-                  Ganti alamat email utama yang digunakan untuk masuk ke dashboard ini.
+                  Change the primary email address used to sign in to this dashboard.
                 </p>
 
                 <form onSubmit={handleUpdateEmail} className="space-y-3 pt-2">
                   <Input
-                    label="Alamat Email Baru"
+                    label="New Email Address"
                     type="email"
                     required
                     value={email}
@@ -185,7 +185,7 @@ export default function AccountClient({
                     disabled={email === currentEmailState}
                     className="w-full"
                   >
-                    Simpan Perubahan Email
+                    Save Email Changes
                   </Button>
                 </form>
               </div>
@@ -199,30 +199,30 @@ export default function AccountClient({
                     <KeyRound className="w-4 h-4" />
                   </div>
                   <h4 className="text-sm font-bold text-slate-900 dark:text-zinc-100">
-                    Ubah Kata Sandi
+                    Update Password
                   </h4>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-zinc-400">
-                  Pastikan akun Anda tetap aman dengan menggunakan kata sandi yang kuat.
+                  Ensure your account is secure by using a strong password.
                 </p>
 
                 <form onSubmit={handleUpdatePassword} className="space-y-3 pt-2">
                   <Input
-                    label="Kata Sandi Baru"
+                    label="New Password"
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimal 6 karakter"
+                    placeholder="Min. 6 characters"
                   />
 
                   <Input
-                    label="Konfirmasi Kata Sandi Baru"
+                    label="Confirm New Password"
                     type="password"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Ketik ulang kata sandi baru"
+                    placeholder="Re-enter new password"
                   />
 
                   <Button
@@ -232,7 +232,7 @@ export default function AccountClient({
                     disabled={!password || !confirmPassword}
                     className="w-full"
                   >
-                    Perbarui Kata Sandi
+                    Update Password
                   </Button>
                 </form>
               </div>

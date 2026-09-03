@@ -29,7 +29,7 @@ export function CopyAgentPromptModal({
   function handleCopy() {
     navigator.clipboard.writeText(promptText)
     setCopied(true)
-    notify('Prompt berhasil disalin ke clipboard!', 'success')
+    notify('Prompt copied to clipboard!', 'success')
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -37,8 +37,8 @@ export function CopyAgentPromptModal({
     <Modal
       show={show}
       onClose={onClose}
-      title="Kirim Task ke AI Coding Agent"
-      description={`Salin prompt dossier investigasi untuk ${bugs.length} bug di project ${project?.name || ''}`}
+      title="Send Task to AI Coding Agent"
+      description={`Copy XML investigation dossier for ${bugs.length} issues in project ${project?.name || ''}`}
       icon={<Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
       maxWidthClass="max-w-2xl"
     >
@@ -47,7 +47,7 @@ export function CopyAgentPromptModal({
         <div className="space-y-2">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
             <Bot className="w-3.5 h-3.5 text-indigo-500" />
-            <span>Langkah-Langkah:</span>
+            <span>Instructions:</span>
           </h4>
 
           <div className="space-y-2">
@@ -59,10 +59,10 @@ export function CopyAgentPromptModal({
                 </span>
                 <div className="space-y-0.5 min-w-0">
                   <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
-                    Salin Teks Prompt
+                    Copy Prompt Text
                   </span>
                   <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    Salin prompt XML dossier bug di bawah ini ke clipboard Anda:
+                    Copy the XML bug investigation dossier below to your clipboard:
                   </p>
                 </div>
               </div>
@@ -82,12 +82,12 @@ export function CopyAgentPromptModal({
                     {copied ? (
                       <>
                         <Check className="w-3.5 h-3.5" />
-                        <span>Sudah Disalin</span>
+                        <span>Copied</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>Salin</span>
+                        <span>Copy</span>
                       </>
                     )}
                   </button>
@@ -106,10 +106,10 @@ export function CopyAgentPromptModal({
               </span>
               <div className="space-y-0.5 min-w-0">
                 <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
-                  Buka AI Coding Agent di Terminal / Editor
+                  Open AI Coding Agent in Terminal / Editor
                 </span>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                  Buka terminal repositori project Anda lalu jalankan <code>claude</code>, Cursor Composer, Windsurf, atau Roo Code.
+                  Open your repository in terminal or IDE, then run <code>claude</code>, Cursor Composer, Windsurf, or Roo Code.
                 </p>
               </div>
             </div>
@@ -121,10 +121,10 @@ export function CopyAgentPromptModal({
               </span>
               <div className="space-y-0.5 min-w-0">
                 <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
-                  Tempel (Paste) & Eksekusi
+                  Paste & Execute
                 </span>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                  Paste teks prompt yang sudah disalin ke chat AI agent. Agent akan menganalisis lokasi kode, memeriksa riwayat negatif, dan memperbaiki bug secara mandiri.
+                  Paste the prompt into your AI agent session. The agent will read anchors, inspect negative knowledge, and fix issues autonomously.
                 </p>
               </div>
             </div>
@@ -138,7 +138,7 @@ export function CopyAgentPromptModal({
             variant="primary"
             onClick={onClose}
           >
-            <span>Tutup</span>
+            <span>Close</span>
           </Button>
         </div>
       </div>

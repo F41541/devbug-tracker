@@ -55,11 +55,11 @@ export async function updateAccountEmail(newEmail: string) {
 
 export async function updateAccountPassword(newPassword: string, confirmPassword?: string) {
   if (!newPassword || newPassword.length < 6) {
-    throw new Error('Kata sandi minimal 6 karakter.')
+    throw new Error('Password must be at least 6 characters.')
   }
 
   if (confirmPassword && newPassword !== confirmPassword) {
-    throw new Error('Konfirmasi kata sandi tidak cocok.')
+    throw new Error('Password confirmation does not match.')
   }
 
   const supabase = await createClient()

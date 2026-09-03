@@ -66,10 +66,10 @@ export function ApiKeyPromptModal({
           <form onSubmit={handleGenerate} className="space-y-4">
             <div className="p-3.5 bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 rounded-xl space-y-1.5 text-xs text-slate-600 dark:text-zinc-300">
               <p className="font-semibold text-slate-800 dark:text-zinc-200">
-                Belum ada API Key terdaftar.
+                No API Key registered yet.
               </p>
               <p className="leading-relaxed">
-                DevBug Tracker dirancang khusus agar AI coding agent dapat membaca status bug, investigasi logs, dan auto-close task.
+                DevBug Tracker is purpose-built for AI coding agents to inspect bug dossiers, logs, and automatically mark issues resolved.
               </p>
             </div>
 
@@ -91,7 +91,7 @@ export function ApiKeyPromptModal({
                 onClick={onClose}
                 className="text-xs text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium py-2 px-3 rounded-lg transition"
               >
-                Nanti Saja
+                Maybe Later
               </button>
               <Button type="submit" variant="primary" loading={isSubmitting}>
                 <Key className="w-4 h-4 mr-1.5" />
@@ -111,7 +111,7 @@ export function ApiKeyPromptModal({
                 </span>
               </div>
               <p className="text-[11px] text-emerald-700 dark:text-emerald-400 leading-relaxed">
-                Simpan key ini sekarang. Kunci rahasia ini hanya ditampilkan satu kali demi keamanan.
+                Save this key now. The secret key is only displayed once for security reasons.
               </p>
               <div className="flex items-center gap-2">
                 <input
@@ -137,11 +137,11 @@ export function ApiKeyPromptModal({
                 onClick={onClose}
                 className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold"
               >
-                <span>Lihat petunjuk MCP & cURL</span>
+                <span>View MCP & cURL guide</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </Link>
               <Button type="button" variant="primary" onClick={onClose}>
-                Selesai
+                Done
               </Button>
             </div>
           </div>
