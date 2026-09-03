@@ -9,11 +9,7 @@ import {
   Kanban,
   List,
   FolderGit2,
-  Download,
-  FileDown,
-  FileCode2,
   Copy,
-  ChevronDown,
   X,
   RotateCcw,
   LogOut,
@@ -21,7 +17,6 @@ import {
   Menu,
   Sparkles,
   Bot,
-  Code2,
 } from 'lucide-react'
 import { ProjectsHub } from '@/components/ProjectsHub'
 import { AppSidebar } from '@/components/AppSidebar'
@@ -30,9 +25,9 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/Button'
 import { KanbanView, ListView, BugModal, BugDetailModal } from '@/components/bugs'
 import { ProjectManagerModal } from '@/components/projects'
+import { CopyAgentPromptModal } from '@/components/bugs/CopyAgentPromptModal'
 import { logout } from '@/app/auth/actions'
-import { generateAIPromptForBug, generateBulkAIPrompt } from '@/lib/ai-prompt'
-import { generateAgentContextJson, generateAgentContextMarkdown } from '@/lib/agent-file'
+import { generateAIPromptForBug } from '@/lib/ai-prompt'
 import { updateBugStatus, deleteBug } from '@/app/actions'
 import { createClient } from '@/lib/supabase/client'
 import { BugItem, BugStatus, BugSeverity, Project } from '@/types'
@@ -156,10 +151,7 @@ export default function DashboardClient({
   const [bugToDelete, setBugToDelete] = useState<BugItem | null>(null)
   const [isDeletingBug, setIsDeletingBug] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-
-  // Export menu
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
-  const exportDropdownRef = useRef<HTMLDivElement>(null)
+  const [showCopyAgentModal, setShowCopyAgentModal] = useState(false)
 
   // Toast
   const [toast, setToast] = useState<ToastData | null>(null)
@@ -254,17 +246,6 @@ export default function DashboardClient({
       supabase.removeChannel(channel)
     }
   }, [selectedBug?.id])
-
-  // Click outside export dropdown
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
-        setIsExportMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   // Filtered bugs
   const filteredBugs = bugs.filter((bug) => {
@@ -393,94 +374,10 @@ export default function DashboardClient({
     }
   }
 
-  // Export handlers
-  function downloadAgentContextFile(format: 'json' | 'markdown') {
-    setIsExportMenuOpen(false)
-    const currentProject = projects.find((p) => p.id === selectedProject) || null
-    if (format === 'json') {
-      const content = generateAgentContextJson(currentProject, filteredBugs)
-      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(content)
-      const downloadAnchor = document.createElement('a')
-      downloadAnchor.setAttribute('href', dataStr)
-      downloadAnchor.setAttribute('download', `devbug.json`)
-      document.body.appendChild(downloadAnchor)
-      downloadAnchor.click()
-      downloadAnchor.remove()
-      showToast('Agent file `devbug.json` downloaded for repo root', 'success')
-      return
-    }
-
-    const mdContent = generateAgentContextMarkdown(currentProject, filteredBugs)
-    const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `DEVBUG.md`
-    a.click()
-    URL.revokeObjectURL(url)
-    showToast('Agent context `DEVBUG.md` downloaded for repo root', 'success')
-  }
-
-  function downloadExport(format: 'markdown' | 'json') {
-    setIsExportMenuOpen(false)
-    if (format === 'json') {
-      const dataStr =
-        'data:text/json;charset=utf-8,' +
-        encodeURIComponent(JSON.stringify(filteredBugs, null, 2))
-      const downloadAnchor = document.createElement('a')
-      downloadAnchor.setAttribute('href', dataStr)
-      downloadAnchor.setAttribute(
-        'download',
-        `devbug-export-${new Date().toISOString().slice(0, 10)}.json`
-      )
-      document.body.appendChild(downloadAnchor)
-      downloadAnchor.click()
-      downloadAnchor.remove()
-      showToast('JSON export downloaded', 'success')
-      return
-    }
-
-    let md = `# DevBug Tracker Report\nGenerated on: ${new Date().toLocaleString()}\nTotal Bugs: ${filteredBugs.length}\n\n`
-    filteredBugs.forEach((b, idx) => {
-      md += `## ${idx + 1}. [${b.severity.toUpperCase()}] ${b.title}\n`
-      md += `- **ID:** #${b.id}\n- **Status:** ${b.status}\n- **Project:** ${b.project?.name || 'Unassigned'}\n- **Environment:** ${b.environment || 'N/A'}\n\n`
-      if (b.description) md += `### Description\n${b.description}\n\n`
-      if (b.steps_to_reproduce) md += `### Steps to Reproduce\n${b.steps_to_reproduce}\n\n`
-      if (b.stack_trace) md += `### Stack Trace\n\`\`\`\n${b.stack_trace}\n\`\`\`\n\n`
-      md += `---\n\n`
-    })
-
-    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `devbug-report-${new Date().toISOString().slice(0, 10)}.md`
-    a.click()
-    URL.revokeObjectURL(url)
-    showToast('Markdown report downloaded', 'success')
-  }
-
   function copyBugForAI(bug: BugItem) {
     const prompt = generateAIPromptForBug(bug)
     navigator.clipboard.writeText(prompt)
     showToast(`Bug #${bug.id} XML Dossier copied for AI!`, 'success')
-  }
-
-  function copyMarkdownReport() {
-    setIsExportMenuOpen(false)
-    let md = `# DevBug Tracker Summary (${filteredBugs.length} bugs)\n\n`
-    filteredBugs.forEach((b, idx) => {
-      md += `${idx + 1}. **[${b.severity.toUpperCase()} / ${b.status}]** #${b.id} ${b.title} (${b.project?.name || 'Project'})\n`
-    })
-    navigator.clipboard.writeText(md)
-    showToast('Summary copied to clipboard!', 'success')
-  }
-
-  function copyAllForAI() {
-    setIsExportMenuOpen(false)
-    const prompt = generateBulkAIPrompt(filteredBugs)
-    navigator.clipboard.writeText(prompt)
-    showToast('Batch XML Prompt copied to clipboard!', 'success')
   }
 
   return (
@@ -574,50 +471,18 @@ export default function DashboardClient({
                   </div>
                 )}
 
-                {/* Export Dropdown */}
-                <div className="relative" ref={exportDropdownRef}>
+                {/* Copy AI Prompt Button (Only visible on project workspace level: fixedWorkspace or selectedProject) */}
+                {(fixedWorkspace || (viewLevel === 'workspace' && selectedProject !== null)) && (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="primary"
                     size="sm"
-                    onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-                    icon={<Download className="w-3.5 h-3.5" />}
+                    onClick={() => setShowCopyAgentModal(true)}
+                    icon={<Copy className="w-3.5 h-3.5" />}
                   >
-                    <span>Export</span>
-                    <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
+                    <span>Copy</span>
                   </Button>
-
-                  {isExportMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl py-1 z-40 text-xs">
-                      <button
-                        type="button"
-                        onClick={copyAllForAI}
-                        className="w-full text-left px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 flex items-center gap-2.5"
-                      >
-                        <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                        <span>Copy AI Task Prompt</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => downloadExport('markdown')}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 flex items-center gap-2.5"
-                      >
-                        <FileDown className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                        <span>Download Markdown Report</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => downloadAgentContextFile('json')}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 flex items-center gap-2.5"
-                      >
-                        <Code2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <span>
-                          Download <code>devbug.json</code>
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -920,6 +785,17 @@ export default function DashboardClient({
         />
       )}
 
+      {/* Copy AI Agent Prompt Modal */}
+      {showCopyAgentModal && (
+        <CopyAgentPromptModal
+          show={showCopyAgentModal}
+          onClose={() => setShowCopyAgentModal(false)}
+          bugs={filteredBugs}
+          project={projects.find((p) => p.id === selectedProject) || null}
+          notify={showToast}
+        />
+      )}
+
       {/* Mobile Drawer / Sidebar */}
       {isMobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
@@ -1052,55 +928,24 @@ export default function DashboardClient({
                 </div>
               </div>
 
-              <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-zinc-800">
-                <div className="text-[11px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase px-2 mb-1">
-                  Export Laporan
+              {(fixedWorkspace || (viewLevel === 'workspace' && selectedProject !== null)) && (
+                <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-zinc-800">
+                  <div className="text-[11px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase px-2 mb-1">
+                    AI Agent Task
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileSidebarOpen(false)
+                      setShowCopyAgentModal(true)
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl"
+                  >
+                    <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <span>Copy Prompt ke AI Agent</span>
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileSidebarOpen(false)
-                    downloadExport('markdown')
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl"
-                >
-                  <FileDown className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>Download Markdown</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileSidebarOpen(false)
-                    downloadExport('json')
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl"
-                >
-                  <FileCode2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span>Download JSON Dump</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileSidebarOpen(false)
-                    copyAllForAI()
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl"
-                >
-                  <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                  <span>Copy AI Agent Prompt Task</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileSidebarOpen(false)
-                    copyMarkdownReport()
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl"
-                >
-                  <Copy className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>Copy Summary Clipboard</span>
-                </button>
-              </div>
+              )}
             </div>
 
             <div className="p-4 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/60 dark:bg-zinc-950/40">
