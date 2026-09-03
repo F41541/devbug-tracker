@@ -72,7 +72,7 @@ export default function DashboardClient({
   // Initialize browser local storage for guest
   useEffect(() => {
     if (isGuest && typeof window !== 'undefined') {
-      const localProject: Project = {
+      const defaultProject: Project = {
         id: 999999,
         uuid: 'local-scratchpad',
         name: 'Local Scratchpad',
@@ -80,9 +80,22 @@ export default function DashboardClient({
         description: 'Offline local-first bug notes stored only in this browser.',
         color: '#6366f1',
       }
-      setProjects([localProject])
-      setSelectedProject(localProject.id)
-      setViewLevel('workspace')
+
+      let loadedProjects = [defaultProject]
+      try {
+        const savedProjects = localStorage.getItem('local_devbug_projects')
+        if (savedProjects) {
+          const parsed = JSON.parse(savedProjects)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            loadedProjects = parsed
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load local projects', e)
+      }
+
+      setProjects(loadedProjects)
+      setSelectedProject(loadedProjects[0]?.id || null)
 
       try {
         const savedBugs = localStorage.getItem('local_devbug_items')
@@ -94,6 +107,17 @@ export default function DashboardClient({
       }
     }
   }, [isGuest])
+
+  // Sync projects back to localStorage for guest
+  useEffect(() => {
+    if (isGuest && typeof window !== 'undefined' && projects.length > 0) {
+      try {
+        localStorage.setItem('local_devbug_projects', JSON.stringify(projects))
+      } catch (e) {
+        console.error('Failed to save projects to localStorage', e)
+      }
+    }
+  }, [projects, isGuest])
 
   // Sync back to localStorage for guest
   useEffect(() => {
@@ -480,10 +504,6 @@ export default function DashboardClient({
           setShowBugModal(true)
         }}
         onManageProjects={() => {
-          if (isGuest && projects.length >= 1) {
-            showToast('Guest Scratchpad dibatasi 1 project lokal. Silakan login admin untuk multi-project workspace.', 'error')
-            return
-          }
           setEditingProject(null)
           setShowProjectModal(true)
         }}
@@ -611,10 +631,6 @@ export default function DashboardClient({
                 setViewLevel('workspace')
               }}
               onOpenNewProjectModal={() => {
-                if (isGuest && projects.length >= 1) {
-                  showToast('Guest Scratchpad dibatasi 1 project lokal. Silakan login admin untuk multi-project workspace.', 'error')
-                  return
-                }
                 setEditingProject(null)
                 setShowProjectModal(true)
               }}
@@ -867,6 +883,7 @@ export default function DashboardClient({
           show={showProjectModal}
           project={editingProject}
           projects={projects}
+          isGuest={isGuest}
           onClose={() => {
             setShowProjectModal(false)
             setEditingProject(null)
@@ -951,14 +968,16 @@ export default function DashboardClient({
                     {projects.length}
                   </span>
                 </button>
-                <Link
-                  href="/account"
-                  onClick={() => setIsMobileSidebarOpen(false)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <Settings className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>Pengaturan Akun</span>
-                </Link>
+                {!isGuest && (
+                  <Link
+                    href="/account"
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <span>Pengaturan Akun</span>
+                  </Link>
+                )}
               </div>
 
               <div className="space-y-2">

@@ -107,22 +107,42 @@ export function AppSidebar({
       <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
         {/* Main Navigation */}
         <div className="space-y-1">
-          <Link
-            href={isGuest ? '/' : '/project'}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
-              pathname === '/project' || (isGuest && pathname === '/')
-                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
-                : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <FolderGit2 className="w-4 h-4 text-indigo-500" />
-              <span>All Projects</span>
-            </div>
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
-              {projects.length}
-            </span>
-          </Link>
+          {isRoot && onSelectProject ? (
+            <button
+              type="button"
+              onClick={() => onSelectProject(null)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                viewLevel === 'projects_hub'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <FolderGit2 className="w-4 h-4 text-indigo-500" />
+                <span>All Projects</span>
+              </div>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
+                {projects.length}
+              </span>
+            </button>
+          ) : (
+            <Link
+              href={isGuest ? '/' : '/project'}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition ${
+                pathname === '/project' || (isGuest && pathname === '/')
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <FolderGit2 className="w-4 h-4 text-indigo-500" />
+                <span>All Projects</span>
+              </div>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
+                {projects.length}
+              </span>
+            </Link>
+          )}
         </div>
 
         {/* Projects List */}
@@ -149,9 +169,46 @@ export function AppSidebar({
             )}
           </div>
           {projects.map((proj) => {
-            const active = pathname === `/project/${proj.uuid}` || (isRoot && selectedProject === proj.id)
-            const projBugsCount = bugs.filter((b) => b.project_id === proj.id && b.status !== 'resolved' && b.status !== 'closed').length
-            const href = proj.uuid ? `/project/${proj.uuid}` : `/?project=${proj.id}`
+            const active =
+              (isRoot && selectedProject === proj.id) ||
+              (!isRoot && pathname === `/project/${proj.uuid}`)
+            const projBugsCount = bugs.filter(
+              (b) => b.project_id === proj.id && b.status !== 'resolved' && b.status !== 'closed'
+            ).length
+
+            if (onSelectProject) {
+              return (
+                <button
+                  key={proj.id}
+                  type="button"
+                  onClick={() => onSelectProject(proj.id)}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition ${
+                    active
+                      ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
+                      : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: proj.color || '#6366f1' }}
+                    />
+                    <span className="truncate">{proj.name}</span>
+                  </div>
+                  {projBugsCount > 0 && (
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400">
+                      {projBugsCount}
+                    </span>
+                  )}
+                </button>
+              )
+            }
+
+            const href = isGuest
+              ? `/?project=${proj.id}`
+              : proj.uuid
+              ? `/project/${proj.uuid}`
+              : `/?project=${proj.id}`
 
             return (
               <Link

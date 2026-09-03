@@ -12,6 +12,7 @@ interface ProjectManagerModalProps {
   show: boolean
   project?: Project | null
   projects: Project[]
+  isGuest?: boolean
   onClose: () => void
   onProjectsChange: React.Dispatch<React.SetStateAction<Project[]>>
   notify: (msg: string, type?: 'success' | 'error' | 'info') => void
@@ -21,6 +22,7 @@ export function ProjectManagerModal({
   show,
   project,
   projects,
+  isGuest = false,
   onClose,
   onProjectsChange,
   notify,
@@ -53,6 +55,40 @@ export function ProjectManagerModal({
         .split(',')
         .map((s) => s.trim())
         .filter((s) => s.length > 0)
+
+      if (isGuest) {
+        if (project) {
+          const updated: Project = {
+            ...project,
+            name: name.trim(),
+            color,
+            description: desc.trim() || undefined,
+            repository_url: repoUrl.trim() || undefined,
+            tech_stack: stackArray,
+            test_command: testCommand.trim() || undefined,
+          }
+          onProjectsChange((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+          onClose()
+          notify(`Project "${updated.name}" updated locally`, 'success')
+        } else {
+          const newId = Date.now()
+          const created: Project = {
+            id: newId,
+            uuid: `guest-${newId}`,
+            name: name.trim(),
+            slug: name.trim().toLowerCase().replace(/\s+/g, '-'),
+            color,
+            description: desc.trim() || undefined,
+            repository_url: repoUrl.trim() || undefined,
+            tech_stack: stackArray,
+            test_command: testCommand.trim() || undefined,
+          }
+          onProjectsChange((prev) => [...prev, created])
+          onClose()
+          notify(`Project "${created.name}" created in local storage`, 'success')
+        }
+        return
+      }
 
       if (project) {
         const updated = await updateProject(project.id, {
@@ -87,6 +123,11 @@ export function ProjectManagerModal({
   }
 
   async function handleDeleteProject(id: number) {
+    if (isGuest) {
+      onProjectsChange((prev) => prev.filter((p) => p.id !== id))
+      notify('Project deleted locally', 'success')
+      return
+    }
     try {
       await deleteProject(id)
       onProjectsChange((prev) => prev.filter((p) => p.id !== id))
