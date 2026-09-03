@@ -50,54 +50,54 @@ export function CopyAgentPromptModal({
       maxWidthClass="max-w-2xl"
     >
       <div className="p-5 sm:p-6 space-y-5 max-h-[calc(85vh-80px)] overflow-y-auto no-scrollbar">
-        {/* Tutorial Steps */}
-        <div className="space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+        {/* Tutorial Steps - Vertical List */}
+        <div className="space-y-2.5">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5 mb-1">
             <Bot className="w-4 h-4 text-indigo-500" />
-            <span>Panduan Langkah-Langkah:</span>
+            <span>Langkah-Langkah:</span>
           </h4>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 flex flex-col justify-between space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">
-                  1
+          <div className="space-y-2">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+                1
+              </span>
+              <div className="space-y-0.5 min-w-0">
+                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
+                  Salin Teks Prompt
                 </span>
-                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
-                  Salin Teks
-                </span>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                  Klik tombol <strong>Salin Prompt</strong> di kanan atas kotak XML dossier di bawah ini.
+                </p>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                Klik tombol <strong>Salin Prompt</strong> di kotak dossier di bawah ini.
-              </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 flex flex-col justify-between space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">
-                  2
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+                2
+              </span>
+              <div className="space-y-0.5 min-w-0">
+                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
+                  Buka AI Coding Agent di Terminal / Editor
                 </span>
-                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
-                  Buka AI Agent
-                </span>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                  Buka terminal repositori project Anda lalu jalankan <code>claude</code>, Cursor Composer, Windsurf, atau Roo Code.
+                </p>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                Buka terminal atau editor: <code>claude</code>, Cursor Composer, Roo Code, dll.
-              </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 flex flex-col justify-between space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">
-                  3
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 flex items-start gap-3">
+              <span className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+                3
+              </span>
+              <div className="space-y-0.5 min-w-0">
+                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
+                  Tempel (Paste) & Eksekusi
                 </span>
-                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
-                  Paste & Jalankan
-                </span>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                  Paste teks prompt yang sudah disalin ke chat AI agent. Agent akan menganalisis lokasi kode, memeriksa riwayat negatif, dan memperbaiki bug secara mandiri.
+                </p>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                Tempel (Paste) teks prompt ke agent. Agent langsung investigasi & memperbaiki bug.
-              </p>
             </div>
           </div>
         </div>
