@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import crypto from 'crypto'
 
 async function authenticateApiKey(req: NextRequest) {
@@ -14,7 +14,7 @@ async function authenticateApiKey(req: NextRequest) {
   if (!rawKey) return null
 
   const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex')
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data: keyRecord, error } = await supabase
     .from('api_keys')
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
   const projectId = searchParams.get('project_id')
   const workspaceId = searchParams.get('workspace_id') || searchParams.get('project_uuid')
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   let resolvedProjectId = projectId
 
@@ -102,7 +102,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Bug id is required.' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     const allowedFields = [
       'status',
       'investigation_state',

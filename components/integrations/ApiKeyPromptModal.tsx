@@ -57,7 +57,7 @@ export function ApiKeyPromptModal({
       show={show}
       onClose={onClose}
       title="Setup Your AI Agent API Key"
-      description="Connect your AI coding agent (Claude Code, Cursor, MCP) to DevBug Tracker"
+      description="Connect your AI coding agent (Claude Code, Cursor, Windsurf) to DevBug Tracker"
       icon={<Bot className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
       maxWidthClass="max-w-lg"
     >
@@ -80,7 +80,7 @@ export function ApiKeyPromptModal({
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Claude Code Agent, Cursor MCP"
+                placeholder="e.g. Claude Code Agent, Cursor Composer"
                 required
               />
             </div>
@@ -137,7 +137,7 @@ export function ApiKeyPromptModal({
                 onClick={onClose}
                 className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold"
               >
-                <span>View MCP & cURL guide</span>
+                <span>View API Keys & Sync guide</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </Link>
               <Button type="button" variant="primary" onClick={onClose}>

@@ -130,25 +130,17 @@ export default function IntegrationsClient({
   const activeApiKeyPlaceholder =
     createdSecret || (apiKeys.length > 0 ? `${apiKeys[0].key_prefix}` : 'YOUR_DEVBUG_API_KEY')
 
-  const selectedProjectUuid = projects[0]?.uuid || 'YOUR_WORKSPACE_UUID'
+  const curlSyncExample = `# 1. Report Task Started (In Progress)
+curl -X PATCH "${originUrl || 'http://localhost:3000'}/api/v1/bugs" \\
+  -H "x-api-key: ${activeApiKeyPlaceholder}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"id": 1, "status": "in_progress", "investigation_state": "fix_in_progress"}'
 
-  const mcpConfigJson = JSON.stringify(
-    {
-      mcpServers: {
-        devbug: {
-          command: 'node',
-          args: ['bin/mcp-server.mjs'],
-          env: {
-            DEVBUG_BASE_URL: originUrl || 'http://localhost:3000',
-            DEVBUG_API_KEY: activeApiKeyPlaceholder,
-            DEVBUG_WORKSPACE_ID: selectedProjectUuid,
-          },
-        },
-      },
-    },
-    null,
-    2
-  )
+# 2. Report Task Verified & Done (Resolved)
+curl -X PATCH "${originUrl || 'http://localhost:3000'}/api/v1/bugs" \\
+  -H "x-api-key: ${activeApiKeyPlaceholder}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"id": 1, "status": "resolved", "investigation_state": "verified", "root_cause": "Fixed auth middleware expiry check"}'`
 
   const curlExample = `curl -X POST "${originUrl || 'http://localhost:3000'}/api/v1/bugs" \\
   -H "Authorization: Bearer ${activeApiKeyPlaceholder}" \\
@@ -190,7 +182,7 @@ export default function IntegrationsClient({
                   </Link>
                   <span className="text-slate-300 dark:text-zinc-600">/</span>
                   <span className="font-bold text-slate-900 dark:text-zinc-100">
-                    MCP & Agent Integrations
+                    API Keys & Integration
                   </span>
                 </div>
               </div>
@@ -208,12 +200,12 @@ export default function IntegrationsClient({
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100">
-                  AI Agent & CLI Integrations
+                  AI Agent & API Integration
                 </h3>
               </div>
               <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-2xl">
-                Connect Claude Code, Roo Code, Antigravity, or custom CI scripts to automate bug
-                reporting and ticket context retrieval.
+                Connect Claude Code, Cursor Composer, Windsurf, or custom CI scripts to automate bug
+                reporting and real-time status updates via HTTP and CLI.
               </p>
             </div>
           </div>
@@ -336,25 +328,25 @@ export default function IntegrationsClient({
                   {curlExample}
                 </pre>
 
-                {/* Model Context Protocol Quick Config */}
+                {/* Realtime Agent Status Sync Snippet */}
                 <div className="space-y-1.5 pt-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <Server className="w-3.5 h-3.5" />
-                      Claude Code / Antigravity MCP Config
+                      <Terminal className="w-3.5 h-3.5 text-indigo-500" />
+                      Realtime Lifecycle CLI Sync (Agent Prompts)
                     </span>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => copyText(mcpConfigJson, 'mcp_box')}
-                      icon={copiedConfig === 'mcp_box' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      onClick={() => copyText(curlSyncExample, 'sync_curl')}
+                      icon={copiedConfig === 'sync_curl' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     >
-                      <span>{copiedConfig === 'mcp_box' ? 'Copied' : 'Copy'}</span>
+                      <span>{copiedConfig === 'sync_curl' ? 'Copied' : 'Copy'}</span>
                     </Button>
                   </div>
-                  <pre className="p-2.5 bg-slate-900 rounded-lg text-[11px] font-mono text-slate-300 overflow-x-auto border border-slate-800 max-h-36">
-                    {mcpConfigJson}
+                  <pre className="p-2.5 bg-slate-900 rounded-lg text-[11px] font-mono text-indigo-300 overflow-x-auto border border-slate-800 max-h-36">
+                    {curlSyncExample}
                   </pre>
                 </div>
               </div>

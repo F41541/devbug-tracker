@@ -86,6 +86,7 @@ export function ProjectsPageClient({
           show={showProjectModal}
           project={editingProject}
           projects={projects}
+          isGuest={false}
           onClose={() => setShowProjectModal(false)}
           onProjectsChange={(updated) => {
             if (typeof updated === 'function') {

@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getProjectByUuid, getProjects, getBugs } from '@/app/actions'
+import { getApiKeys } from '@/app/integrations/actions'
 import DashboardClient from '@/components/DashboardClient'
 
 export const dynamic = 'force-dynamic'
@@ -27,9 +28,10 @@ export default async function ProjectWorkspacePage({ params }: ProjectWorkspaceP
     notFound()
   }
 
-  const [allProjects, projectBugs] = await Promise.all([
+  const [allProjects, projectBugs, apiKeys] = await Promise.all([
     getProjects(),
     getBugs({ project_id: project.id }),
+    getApiKeys().catch(() => []),
   ])
 
   return (
@@ -40,6 +42,7 @@ export default async function ProjectWorkspacePage({ params }: ProjectWorkspaceP
       userEmail={user.email}
       isGuest={false}
       fixedWorkspace={true}
+      initialApiKeys={apiKeys}
     />
   )
 }

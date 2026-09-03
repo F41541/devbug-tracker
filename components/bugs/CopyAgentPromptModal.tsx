@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Sparkles, Copy, Check, Terminal, ArrowRight, Bot } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Sparkles, Copy, Check, Bot, Zap, Key } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { BugItem, Project } from '@/types'
+import { BugItem, Project, ApiKey } from '@/types'
 import { generateBulkAIPrompt } from '@/lib/ai-prompt'
 
 interface CopyAgentPromptModalProps {
@@ -12,6 +12,7 @@ interface CopyAgentPromptModalProps {
   onClose: () => void
   bugs: BugItem[]
   project?: Project | null
+  apiKeys?: ApiKey[]
   notify: (msg: string, type?: 'success' | 'error' | 'info') => void
 }
 
@@ -20,16 +21,28 @@ export function CopyAgentPromptModal({
   onClose,
   bugs,
   project,
+  apiKeys = [],
   notify,
 }: CopyAgentPromptModalProps) {
   const [copied, setCopied] = useState(false)
+  const [baseUrl, setBaseUrl] = useState('')
+  const [selectedKey, setSelectedKey] = useState<string>('')
 
-  const promptText = generateBulkAIPrompt(bugs)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setBaseUrl(window.location.origin)
+    }
+  }, [])
+
+  const promptText = generateBulkAIPrompt(bugs, project, {
+    baseUrl: baseUrl || 'http://localhost:3000',
+    apiKey: selectedKey || undefined,
+  })
 
   function handleCopy() {
     navigator.clipboard.writeText(promptText)
     setCopied(true)
-    notify('Prompt copied to clipboard!', 'success')
+    notify('Task prompt copied! Paste into your AI coding agent.', 'success')
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -38,11 +51,43 @@ export function CopyAgentPromptModal({
       show={show}
       onClose={onClose}
       title="Send Task to AI Coding Agent"
-      description={`Copy XML investigation dossier for ${bugs.length} issues in project ${project?.name || ''}`}
+      description={`Generate autonomous prompt with live sync triggers for ${bugs.length} issue${bugs.length > 1 ? 's' : ''}`}
       icon={<Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
       maxWidthClass="max-w-2xl"
     >
       <div className="p-4 sm:p-5 space-y-3.5 max-h-[calc(85vh-70px)] overflow-y-auto no-scrollbar">
+        {/* Realtime Sync Highlight Banner */}
+        <div className="p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/60 dark:border-indigo-800/60 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-indigo-600 text-white flex-shrink-0">
+            <Zap className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
+              Live Realtime Sync
+            </p>
+            <p className="text-[11px] text-indigo-700/80 dark:text-indigo-400/90 leading-relaxed">
+              When executed, the AI agent runs background terminal triggers to auto-update bug status to <strong className="font-semibold">In Progress</strong> and <strong className="font-semibold">Resolved</strong> directly on this board.
+            </p>
+          </div>
+        </div>
+
+        {/* Optional API Key Input / Selector */}
+        {apiKeys.length > 0 && (
+          <div className="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/40 space-y-1.5">
+            <label className="text-[11px] font-semibold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5 text-amber-500" />
+              <span>Authorize Agent via API Key (Optional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Paste your devbug_sec_... key (or leave empty if using local agent)"
+              value={selectedKey}
+              onChange={(e) => setSelectedKey(e.target.value)}
+              className="w-full px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+        )}
+
         {/* Tutorial Steps - Vertical List */}
         <div className="space-y-2">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
@@ -59,10 +104,10 @@ export function CopyAgentPromptModal({
                 </span>
                 <div className="space-y-0.5 min-w-0">
                   <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
-                    Copy Prompt Text
+                    Copy Task Prompt
                   </span>
                   <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    Copy the XML bug investigation dossier below to your clipboard:
+                    Copy the XML prompt with embedded sync commands to your clipboard:
                   </p>
                 </div>
               </div>
@@ -87,7 +132,7 @@ export function CopyAgentPromptModal({
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>Copy</span>
+                        <span>Copy Prompt</span>
                       </>
                     )}
                   </button>
@@ -106,10 +151,10 @@ export function CopyAgentPromptModal({
               </span>
               <div className="space-y-0.5 min-w-0">
                 <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
-                  Open AI Coding Agent in Terminal / Editor
+                  Paste into AI Agent (Claude Code / Cursor / Windsurf)
                 </span>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                  Open your repository in terminal or IDE, then run <code>claude</code>, Cursor Composer, Windsurf, or Roo Code.
+                  Open terminal or composer inside your target code repository, paste the prompt, and let the agent work.
                 </p>
               </div>
             </div>
@@ -121,10 +166,10 @@ export function CopyAgentPromptModal({
               </span>
               <div className="space-y-0.5 min-w-0">
                 <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
-                  Paste & Execute
+                  Watch Live Sync in Browser
                 </span>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                  Paste the prompt into your AI agent session. The agent will read anchors, inspect negative knowledge, and fix issues autonomously.
+                  The agent will fire curl triggers at start and upon completion. Your dashboard cards update in real time.
                 </p>
               </div>
             </div>
@@ -138,7 +183,7 @@ export function CopyAgentPromptModal({
             variant="primary"
             onClick={onClose}
           >
-            <span>Close</span>
+            <span>Done</span>
           </Button>
         </div>
       </div>

@@ -232,7 +232,7 @@ export function AppSidebar({
             }`}
           >
             <Bot className="w-4 h-4 text-amber-500" />
-            <span>MCP & Agent API</span>
+            <span>API Keys & Integration</span>
           </Link>
 
           {/* Account Settings only for Logged-In Admin */}

@@ -30,7 +30,7 @@ import { logout } from '@/app/auth/actions'
 import { generateAIPromptForBug } from '@/lib/ai-prompt'
 import { updateBugStatus, deleteBug } from '@/app/actions'
 import { createClient } from '@/lib/supabase/client'
-import { BugItem, BugStatus, BugSeverity, Project } from '@/types'
+import { BugItem, BugStatus, BugSeverity, Project, ApiKey } from '@/types'
 
 interface DashboardProps {
   initialBugs: BugItem[]
@@ -39,6 +39,7 @@ interface DashboardProps {
   userEmail?: string
   isGuest?: boolean
   fixedWorkspace?: boolean
+  initialApiKeys?: ApiKey[]
 }
 
 export default function DashboardClient({
@@ -48,9 +49,11 @@ export default function DashboardClient({
   userEmail,
   isGuest = false,
   fixedWorkspace = false,
+  initialApiKeys = [],
 }: DashboardProps) {
   const [bugs, setBugs] = useState<BugItem[]>(initialBugs)
   const [projects, setProjects] = useState<Project[]>(initialProjects)
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>(initialApiKeys)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedProject, setSelectedProject] = useState<number | null>(
     initialSelectedProjectId || null
@@ -375,7 +378,10 @@ export default function DashboardClient({
   }
 
   function copyBugForAI(bug: BugItem) {
-    const prompt = generateAIPromptForBug(bug)
+    const originUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+    const prompt = generateAIPromptForBug(bug, null, {
+      baseUrl: originUrl,
+    })
     navigator.clipboard.writeText(prompt)
     showToast(`Bug #${bug.id} XML Dossier copied for AI!`, 'success')
   }
@@ -533,20 +539,22 @@ export default function DashboardClient({
                   {selectedProject && (() => {
                     const currentProj = projects.find((p) => p.id === selectedProject)
                     return (
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
-                        {currentProj?.repository_url && (
-                          <span className="font-mono text-[11px] truncate max-w-xs text-slate-600 dark:text-zinc-400 hover:text-indigo-600">
-                            {currentProj.repository_url}
-                          </span>
-                        )}
-                        {currentProj?.tech_stack && currentProj.tech_stack.length > 0 && (
-                          <span>• {currentProj.tech_stack.join(', ')}</span>
-                        )}
-                        {currentProj?.test_command && (
-                          <span className="font-mono text-[11px] text-amber-600 dark:text-amber-400">
-                            • {currentProj.test_command}
-                          </span>
-                        )}
+                      <div className="space-y-1.5 pt-0.5">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
+                          {currentProj?.repository_url && (
+                            <span className="font-mono text-[11px] truncate max-w-xs text-slate-600 dark:text-zinc-400 hover:text-indigo-600">
+                              {currentProj.repository_url}
+                            </span>
+                          )}
+                          {currentProj?.tech_stack && currentProj.tech_stack.length > 0 && (
+                            <span>• {currentProj.tech_stack.join(', ')}</span>
+                          )}
+                          {currentProj?.test_command && (
+                            <span className="font-mono text-[11px] text-amber-600 dark:text-amber-400">
+                              • {currentProj.test_command}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )
                   })()}
@@ -792,6 +800,7 @@ export default function DashboardClient({
           onClose={() => setShowCopyAgentModal(false)}
           bugs={filteredBugs}
           project={projects.find((p) => p.id === selectedProject) || null}
+          apiKeys={apiKeys}
           notify={showToast}
         />
       )}
@@ -837,7 +846,7 @@ export default function DashboardClient({
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <Bot className="w-4 h-4 text-amber-500" />
-                  <span>MCP & API Agent</span>
+                  <span>API Keys & Integration</span>
                 </Link>
                 <button
                   type="button"
