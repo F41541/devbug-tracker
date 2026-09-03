@@ -9,7 +9,6 @@ import {
   Trash2,
   Terminal,
   Sparkles,
-  Database,
   Server,
   X,
   Menu,
@@ -240,23 +239,6 @@ export default function IntegrationsClient({
               </div>
             </div>
           )}
-
-          {/* Storage Backend Information Section */}
-          <div className="bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 rounded-xl p-4 sm:p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-                <Database className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <span>Backend Database Configuration</span>
-              </h4>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 font-semibold">
-                ACTIVE: Supabase PostgreSQL
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-              Database backend is configured during installation/bootstrap via <code className="font-mono text-indigo-600 dark:text-indigo-400">.env.local</code>.
-              Unauthenticated visitors use browser offline storage on the front page, while authenticated admins sync with this configured PostgreSQL database.
-            </p>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* API Keys Management */}
