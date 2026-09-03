@@ -123,14 +123,20 @@ export function ProjectManagerModal({
   }
 
   async function handleDeleteProject(id: number) {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus project ini?')) {
+      return
+    }
+
     if (isGuest) {
       onProjectsChange((prev) => prev.filter((p) => p.id !== id))
+      onClose()
       notify('Project deleted locally', 'success')
       return
     }
     try {
       await deleteProject(id)
       onProjectsChange((prev) => prev.filter((p) => p.id !== id))
+      onClose()
       notify('Project deleted', 'success')
     } catch (e: any) {
       notify(e.message || 'Failed to delete project', 'error')
@@ -231,6 +237,29 @@ export function ProjectManagerModal({
             </Button>
           </div>
         </form>
+
+        {/* Danger Zone: Delete This Project when in Edit Mode */}
+        {project && (
+          <div className="pt-3 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete this project</span>
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-zinc-400">
+                Hapus project ini beserta seluruh konfigurasi dan bug terkait.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              onClick={() => handleDeleteProject(project.id)}
+            >
+              Delete Project
+            </Button>
+          </div>
+        )}
 
         {/* Existing Projects List */}
         {!project && (

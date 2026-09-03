@@ -16,6 +16,7 @@ import { ProjectCard } from '@/components/projects/ProjectCard'
 interface ProjectsHubProps {
   projects: Project[]
   bugs: BugItem[]
+  isGuest?: boolean
   onSelectProject: (projectId: number | null) => void
   onOpenNewProjectModal: () => void
   onEditProject?: (project: Project) => void
@@ -24,6 +25,7 @@ interface ProjectsHubProps {
 export function ProjectsHub({
   projects,
   bugs,
+  isGuest = false,
   onSelectProject,
   onOpenNewProjectModal,
   onEditProject,
@@ -94,33 +96,52 @@ export function ProjectsHub({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenNewProjectModal}
-          className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center gap-1.5"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>New Project</span>
-        </button>
+        {!isGuest && (
+          <button
+            type="button"
+            onClick={onOpenNewProjectModal}
+            className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Project</span>
+          </button>
+        )}
       </div>
 
       {/* Projects Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {/* Create New Project Action Card */}
-        <div
-          onClick={onOpenNewProjectModal}
-          className="border border-dashed border-slate-300 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/30 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition min-h-[160px] group"
-        >
-          <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 group-hover:text-indigo-600 transition mb-2 shadow-2xs">
-            <Plus className="w-5 h-5" />
+        {/* Create New Project Action Card or Guest Notice */}
+        {!isGuest ? (
+          <div
+            onClick={onOpenNewProjectModal}
+            className="border border-dashed border-slate-300 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/30 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition min-h-[160px] group"
+          >
+            <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 group-hover:text-indigo-600 transition mb-2 shadow-2xs">
+              <Plus className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-700 dark:text-zinc-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+              Add New Project
+            </span>
+            <p className="text-[11px] text-slate-400 dark:text-zinc-500 max-w-[200px] mt-0.5">
+              Configure git repository, tech stack, and test command
+            </p>
           </div>
-          <span className="text-xs font-bold text-slate-700 dark:text-zinc-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-            Add New Project
-          </span>
-          <p className="text-[11px] text-slate-400 dark:text-zinc-500 max-w-[200px] mt-0.5">
-            Configure git repository, tech stack, and test command
-          </p>
-        </div>
+        ) : (
+          <div
+            onClick={onOpenNewProjectModal}
+            className="border border-dashed border-amber-300/80 dark:border-amber-900/50 bg-amber-50/30 dark:bg-amber-950/20 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition min-h-[160px] group"
+          >
+            <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-900 text-amber-500 group-hover:text-amber-600 transition mb-2 shadow-2xs">
+              <Plus className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
+              Add New Project
+            </span>
+            <p className="text-[11px] text-slate-500 dark:text-zinc-400 max-w-[220px] mt-0.5">
+              Guest dibatasi 1 project offline. Login admin untuk multi-project workspace.
+            </p>
+          </div>
+        )}
 
         {/* User Projects Cards */}
         {projects.map((proj) => {

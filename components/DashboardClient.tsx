@@ -504,6 +504,10 @@ export default function DashboardClient({
           setShowBugModal(true)
         }}
         onManageProjects={() => {
+          if (isGuest) {
+            showToast('Mode guest dibatasi 1 project offline. Silakan login admin untuk menambah project.', 'error')
+            return
+          }
           setEditingProject(null)
           setShowProjectModal(true)
         }}
@@ -626,11 +630,16 @@ export default function DashboardClient({
             <ProjectsHub
               projects={projects}
               bugs={bugs}
+              isGuest={isGuest}
               onSelectProject={(projId) => {
                 setSelectedProject(projId)
                 setViewLevel('workspace')
               }}
               onOpenNewProjectModal={() => {
+                if (isGuest) {
+                  showToast('Mode guest dibatasi 1 project offline. Silakan login admin untuk menambah project.', 'error')
+                  return
+                }
                 setEditingProject(null)
                 setShowProjectModal(true)
               }}
