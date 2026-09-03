@@ -165,7 +165,7 @@ export function ProjectManagerModal({
             placeholder="e.g. E-Commerce Web"
           />
 
-          {project?.uuid && (
+          {!isGuest && project?.uuid && (
             <div className="p-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl flex items-center justify-between">
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Workspace UUID (MCP)</span>
