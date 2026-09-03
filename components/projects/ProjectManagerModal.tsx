@@ -238,8 +238,8 @@ export function ProjectManagerModal({
           </div>
         </form>
 
-        {/* Danger Zone: Delete This Project when in Edit Mode */}
-        {project && (
+        {/* Danger Zone: Delete This Project when in Edit Mode (Hidden for guest / Local Scratchpad) */}
+        {project && !isGuest && (
           <div className="pt-3 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
