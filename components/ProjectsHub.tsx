@@ -30,9 +30,6 @@ export function ProjectsHub({
 }: ProjectsHubProps) {
   // Global metrics across all bugs
   const totalBugs = bugs.length
-  const criticalBugs = bugs.filter(
-    (b) => b.severity === 'critical' && b.status !== 'resolved' && b.status !== 'closed'
-  ).length
   const openBugs = bugs.filter((b) => b.status === 'open').length
   const inProgressBugs = bugs.filter((b) => b.status === 'in_progress').length
   const resolvedBugs = bugs.filter((b) => b.status === 'resolved' || b.status === 'closed').length
@@ -84,25 +81,6 @@ export function ProjectsHub({
           variant="emerald"
         />
       </div>
-
-      {/* Critical Alert Banner if any critical bugs */}
-      {criticalBugs > 0 && (
-        <div className="flex items-center justify-between p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-700 dark:text-rose-400">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-rose-500 text-white">
-              <AlertCircle className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs font-bold">
-                {criticalBugs} Critical Bug{criticalBugs > 1 ? 's' : ''} Need Urgent Attention
-              </p>
-              <p className="text-[11px] opacity-80">
-                Fix highest priority blocker issues to keep workspace healthy.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Projects Grid Header */}
       <div className="flex items-center justify-between">
