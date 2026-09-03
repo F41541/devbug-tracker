@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getBugs, getProjects } from '@/app/actions'
-import { HomeClient } from '@/components/HomeClient'
+import DashboardClient from '@/components/DashboardClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +24,7 @@ export default async function HomePage() {
   }
 
   return (
-    <HomeClient
+    <DashboardClient
       initialBugs={initialBugs}
       initialProjects={initialProjects}
       userEmail={user?.email}

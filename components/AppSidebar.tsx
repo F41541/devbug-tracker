@@ -193,23 +193,25 @@ export function AppSidebar({
           })}
         </div>
 
-        {/* Tools & Config (Only for Authenticated Admin) */}
-        {!isGuest && (
-          <div className="space-y-1">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 px-2.5 mb-1.5">
-              Tools & Config
-            </div>
-            <Link
-              href="/integrations"
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
-                pathname === '/integrations'
-                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
-                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              <Bot className="w-4 h-4 text-amber-500" />
-              <span>MCP & Agent API</span>
-            </Link>
+        {/* Tools & Config */}
+        <div className="space-y-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 px-2.5 mb-1.5">
+            Tools & Config
+          </div>
+          <Link
+            href="/integrations"
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
+              pathname === '/integrations'
+                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
+                : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+            }`}
+          >
+            <Bot className="w-4 h-4 text-amber-500" />
+            <span>MCP & Agent API</span>
+          </Link>
+
+          {/* Account Settings only for Logged-In Admin */}
+          {!isGuest && (
             <Link
               href="/account"
               className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
@@ -221,8 +223,8 @@ export function AppSidebar({
               <Settings className="w-4 h-4 text-slate-500" />
               <span>Account Settings</span>
             </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* User Footer */}

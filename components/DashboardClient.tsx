@@ -480,6 +480,10 @@ export default function DashboardClient({
           setShowBugModal(true)
         }}
         onManageProjects={() => {
+          if (isGuest && projects.length >= 1) {
+            showToast('Guest Scratchpad dibatasi 1 project lokal. Silakan login admin untuk multi-project workspace.', 'error')
+            return
+          }
           setEditingProject(null)
           setShowProjectModal(true)
         }}
@@ -607,6 +611,10 @@ export default function DashboardClient({
                 setViewLevel('workspace')
               }}
               onOpenNewProjectModal={() => {
+                if (isGuest && projects.length >= 1) {
+                  showToast('Guest Scratchpad dibatasi 1 project lokal. Silakan login admin untuk multi-project workspace.', 'error')
+                  return
+                }
                 setEditingProject(null)
                 setShowProjectModal(true)
               }}

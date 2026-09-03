@@ -23,9 +23,10 @@ import { Button } from '@/components/ui/Button'
 
 interface IntegrationsClientProps {
   initialApiKeys: ApiKey[]
-  userEmail: string
+  userEmail?: string
   projects?: Project[]
   bugs?: BugItem[]
+  isGuest?: boolean
 }
 
 export default function IntegrationsClient({
@@ -33,6 +34,7 @@ export default function IntegrationsClient({
   userEmail,
   projects = [],
   bugs = [],
+  isGuest = false,
 }: IntegrationsClientProps) {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>(initialApiKeys)
   const [keyName, setKeyName] = useState('')
@@ -56,6 +58,10 @@ export default function IntegrationsClient({
 
   async function handleCreateKey(e: React.FormEvent) {
     e.preventDefault()
+    if (isGuest) {
+      showToast('Silakan login sebagai admin untuk membuat API Key live.', 'error')
+      return
+    }
     if (!keyName.trim()) return
 
     setIsCreatingKey(true)
@@ -73,6 +79,10 @@ export default function IntegrationsClient({
   }
 
   async function handleDeleteKey(id: number) {
+    if (isGuest) {
+      showToast('Hanya admin terautentikasi yang dapat menghapus key.', 'error')
+      return
+    }
     try {
       await deleteApiKey(id)
       setApiKeys((prev) => prev.filter((k) => k.id !== id))
