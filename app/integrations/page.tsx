@@ -1,12 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import AccountClient from '@/components/AccountClient'
+import IntegrationsClient from '@/components/IntegrationsClient'
+import { getApiKeys } from '@/app/integrations/actions'
 import { getProjects, getBugs } from '@/app/actions'
 import { Project, BugItem } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AccountPage() {
+export default async function IntegrationsPage() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -17,21 +18,27 @@ export default async function AccountPage() {
     redirect('/login')
   }
 
+  let apiKeys: any[] = []
   let projects: Project[] = []
   let bugs: BugItem[] = []
+
   try {
-    const [projectsData, bugsData] = await Promise.all([getProjects(), getBugs()])
+    const [keysData, projectsData, bugsData] = await Promise.all([
+      getApiKeys(),
+      getProjects(),
+      getBugs(),
+    ])
+    apiKeys = keysData
     projects = projectsData
     bugs = bugsData
   } catch (e) {
-    console.error('Failed to load data for account page:', e)
+    console.error('Failed to load data for integrations page:', e)
   }
 
   return (
-    <AccountClient
-      userId={user.id}
+    <IntegrationsClient
+      initialApiKeys={apiKeys}
       userEmail={user.email || ''}
-      createdAt={user.created_at}
       projects={projects}
       bugs={bugs}
     />

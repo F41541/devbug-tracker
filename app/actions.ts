@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { BugItem, BugStatus, BugSeverity, Project } from '@/types'
+import { bugInputSchema, projectInputSchema } from '@/lib/validations'
 
 async function requireAuth() {
   const supabase = await createClient()
@@ -47,7 +48,7 @@ export async function getBugs(filters?: {
   }
   if (filters?.search) {
     const s = `%${filters.search.trim()}%`
-    query = query.or(`title.ilike.${s},description.ilike.${s},stack_trace.ilike.${s}`)
+    query = query.or(`title.ilike.${s},description.ilike.${s},stack_trace.ilike.${s},fix_hint.ilike.${s}`)
   }
 
   const { data, error } = await query
@@ -58,43 +59,60 @@ export async function getBugs(filters?: {
   return data as BugItem[]
 }
 
-export async function createBug(formData: {
+export async function createBug(rawFormData: {
   title: string
-  project_id?: number | null
-  description?: string
-  environment?: string
+  project_id: number
+  description?: string | null
+  environment?: string | null
   severity: BugSeverity
   status: BugStatus
-  steps_to_reproduce?: string
-  stack_trace?: string
-  expected_result?: string
-  actual_result?: string
+  fix_hint?: string | null
+  suspected_files?: string[] | null
+  resolved_commit?: string | null
+  steps_to_reproduce?: string | null
+  stack_trace?: string | null
+  expected_result?: string | null
+  actual_result?: string | null
   attachments?: { file_path: string; file_name: string; file_type: string; file_size: number }[]
 }) {
   const { supabase } = await requireAuth()
 
-  if (!formData.title || !formData.title.trim()) {
-    throw new Error('Title is required.')
+  const parsed = bugInputSchema.safeParse(rawFormData)
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i: { message: string }) => i.message).join(', ')
+    throw new Error(msg || 'Invalid bug data.')
   }
+
+  const formData = parsed.data
   
   const insertPayload = {
-    title: formData.title.trim(),
-    project_id: formData.project_id || null,
-    description: formData.description?.trim() || null,
-    environment: formData.environment?.trim() || null,
+    title: formData.title,
+    project_id: formData.project_id,
+    description: formData.description || null,
+    environment: formData.environment || null,
     severity: formData.severity,
     status: formData.status,
-    steps_to_reproduce: formData.steps_to_reproduce?.trim() || null,
-    stack_trace: formData.stack_trace?.trim() || null,
-    expected_result: formData.expected_result?.trim() || null,
-    actual_result: formData.actual_result?.trim() || null,
+    fix_hint: formData.fix_hint || null,
+    suspected_files: formData.suspected_files || [],
+    confirmed_files: formData.confirmed_files || [],
+    investigation_state: formData.investigation_state || 'unconfirmed',
+    reproduction_reliability: formData.reproduction_reliability || 'untested',
+    root_cause: formData.root_cause || null,
+    failed_attempts: formData.failed_attempts || [],
+    branch_name: formData.branch_name || null,
+    base_commit_sha: formData.base_commit_sha || null,
+    resolved_commit: formData.resolved_commit || null,
+    steps_to_reproduce: formData.steps_to_reproduce || null,
+    stack_trace: formData.stack_trace || null,
+    expected_result: formData.expected_result || null,
+    actual_result: formData.actual_result || null,
     resolved_at: formData.status === 'resolved' ? new Date().toISOString() : null,
   }
 
   const { data: bug, error } = await supabase
     .from('bug_items')
     .insert(insertPayload)
-    .select()
+    .select('*, project:projects(*), attachments(*)')
     .single()
 
   if (error) {
@@ -122,37 +140,54 @@ export async function createBug(formData: {
 
 export async function updateBug(
   id: number,
-  formData: {
+  rawFormData: {
     title: string
-    project_id?: number | null
-    description?: string
-    environment?: string
+    project_id: number
+    description?: string | null
+    environment?: string | null
     severity: BugSeverity
     status: BugStatus
-    steps_to_reproduce?: string
-    stack_trace?: string
-    expected_result?: string
-    actual_result?: string
+    fix_hint?: string | null
+    suspected_files?: string[] | null
+    resolved_commit?: string | null
+    steps_to_reproduce?: string | null
+    stack_trace?: string | null
+    expected_result?: string | null
+    actual_result?: string | null
     newAttachments?: { file_path: string; file_name: string; file_type: string; file_size: number }[]
   }
 ) {
   const { supabase } = await requireAuth()
 
-  if (!formData.title || !formData.title.trim()) {
-    throw new Error('Title is required.')
+  const parsed = bugInputSchema.safeParse(rawFormData)
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i: { message: string }) => i.message).join(', ')
+    throw new Error(msg || 'Invalid bug data.')
   }
 
+  const formData = parsed.data
+
   const updatePayload: Record<string, any> = {
-    title: formData.title.trim(),
-    project_id: formData.project_id || null,
-    description: formData.description?.trim() || null,
-    environment: formData.environment?.trim() || null,
+    title: formData.title,
+    project_id: formData.project_id,
+    description: formData.description || null,
+    environment: formData.environment || null,
     severity: formData.severity,
     status: formData.status,
-    steps_to_reproduce: formData.steps_to_reproduce?.trim() || null,
-    stack_trace: formData.stack_trace?.trim() || null,
-    expected_result: formData.expected_result?.trim() || null,
-    actual_result: formData.actual_result?.trim() || null,
+    fix_hint: formData.fix_hint || null,
+    suspected_files: formData.suspected_files || [],
+    confirmed_files: formData.confirmed_files || [],
+    investigation_state: formData.investigation_state || 'unconfirmed',
+    reproduction_reliability: formData.reproduction_reliability || 'untested',
+    root_cause: formData.root_cause || null,
+    failed_attempts: formData.failed_attempts || [],
+    branch_name: formData.branch_name || null,
+    base_commit_sha: formData.base_commit_sha || null,
+    resolved_commit: formData.resolved_commit || null,
+    steps_to_reproduce: formData.steps_to_reproduce || null,
+    stack_trace: formData.stack_trace || null,
+    expected_result: formData.expected_result || null,
+    actual_result: formData.actual_result || null,
     updated_at: new Date().toISOString(),
   }
 
@@ -166,7 +201,7 @@ export async function updateBug(
     .from('bug_items')
     .update(updatePayload)
     .eq('id', id)
-    .select()
+    .select('*, project:projects(*), attachments(*)')
     .single()
 
   if (error) {
@@ -226,26 +261,6 @@ export async function deleteBug(id: number) {
   revalidatePath('/')
 }
 
-export async function deleteAttachment(attachmentId: number, filePath?: string) {
-  const { supabase } = await requireAuth()
-  if (filePath) {
-    try {
-      const fileName = filePath.split('/').pop()
-      if (fileName) {
-        await supabase.storage.from('bug-attachments').remove([fileName])
-      }
-    } catch (e) {
-      console.error('Failed to remove from storage:', e)
-    }
-  }
-  const { error } = await supabase.from('attachments').delete().eq('id', attachmentId)
-  if (error) {
-    console.error('Database error in deleteAttachment:', error.message)
-    throw new Error('Failed to delete attachment.')
-  }
-  revalidatePath('/')
-}
-
 // PROJECT ACTIONS
 export async function getProjects() {
   const { supabase } = await requireAuth()
@@ -261,16 +276,24 @@ export async function getProjects() {
   return data as Project[]
 }
 
-export async function createProject(formData: {
+export async function createProject(rawFormData: {
   name: string
   color?: string
-  description?: string
-  repository_url?: string
+  description?: string | null
+  repository_url?: string | null
+  tech_stack?: string[] | null
+  package_manager?: string | null
+  test_command?: string | null
 }) {
   const { supabase } = await requireAuth()
-  if (!formData.name || !formData.name.trim()) {
-    throw new Error('Project name is required.')
+
+  const parsed = projectInputSchema.safeParse(rawFormData)
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i: { message: string }) => i.message).join(', ')
+    throw new Error(msg || 'Invalid project data.')
   }
+
+  const formData = parsed.data
 
   let baseSlug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
   if (!baseSlug) {
@@ -280,11 +303,14 @@ export async function createProject(formData: {
   const { data, error } = await supabase
     .from('projects')
     .insert({
-      name: formData.name.trim(),
+      name: formData.name,
       slug: `${baseSlug}-${Date.now().toString().slice(-4)}`,
       color: formData.color || '#6366f1',
-      description: formData.description?.trim() || null,
-      repository_url: formData.repository_url?.trim() || null,
+      description: formData.description || null,
+      repository_url: formData.repository_url || null,
+      tech_stack: formData.tech_stack || [],
+      package_manager: formData.package_manager || 'npm',
+      test_command: formData.test_command || 'npm test',
     })
     .select()
     .single()
@@ -297,27 +323,35 @@ export async function createProject(formData: {
   return data
 }
 
-export async function updateProject(
-  id: number,
-  formData: {
-    name: string
-    color?: string
-    description?: string
-    repository_url?: string
-  }
-) {
+export async function updateProject(id: number, rawFormData: {
+  name: string
+  color?: string
+  description?: string | null
+  repository_url?: string | null
+  tech_stack?: string[] | null
+  package_manager?: string | null
+  test_command?: string | null
+}) {
   const { supabase } = await requireAuth()
-  if (!formData.name || !formData.name.trim()) {
-    throw new Error('Project name is required.')
+
+  const parsed = projectInputSchema.safeParse(rawFormData)
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i: { message: string }) => i.message).join(', ')
+    throw new Error(msg || 'Invalid project data.')
   }
+
+  const formData = parsed.data
 
   const { data, error } = await supabase
     .from('projects')
     .update({
-      name: formData.name.trim(),
-      color: formData.color,
-      description: formData.description?.trim() || null,
-      repository_url: formData.repository_url?.trim() || null,
+      name: formData.name,
+      color: formData.color || '#6366f1',
+      description: formData.description || null,
+      repository_url: formData.repository_url || null,
+      tech_stack: formData.tech_stack || [],
+      package_manager: formData.package_manager || 'npm',
+      test_command: formData.test_command || 'npm test',
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
@@ -330,6 +364,20 @@ export async function updateProject(
   }
   revalidatePath('/')
   return data
+}
+
+export async function getProjectByUuid(uuid: string) {
+  const { supabase } = await requireAuth()
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('uuid', uuid)
+    .single()
+
+  if (error || !data) {
+    return null
+  }
+  return data as Project
 }
 
 export async function deleteProject(id: number) {

@@ -80,10 +80,16 @@ export default function LoginPage() {
                 type="password"
                 name="password"
                 required
-                placeholder="••••••••••••"
+                placeholder="123456"
                 className="w-full pl-9 pr-3.5 py-2.5 text-sm bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
               />
             </div>
+          </div>
+
+          <div className="p-2.5 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl text-[11px] text-slate-500 dark:text-zinc-400 flex flex-col gap-0.5">
+            <span className="font-semibold text-slate-700 dark:text-zinc-300">Default Admin Credentials:</span>
+            <span>Email: <code className="font-mono text-indigo-600 dark:text-indigo-400">admin@devbug.io</code></span>
+            <span>Password: <code className="font-mono text-indigo-600 dark:text-indigo-400">123456</code></span>
           </div>
 
           <button

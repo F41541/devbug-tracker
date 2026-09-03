@@ -16,7 +16,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 })
 
 const defaultEmail = process.env.SEED_ADMIN_EMAIL || 'admin@devbug.io'
-const defaultPassword = process.env.SEED_ADMIN_PASSWORD || 'password123'
+const defaultPassword = process.env.SEED_ADMIN_PASSWORD || '123456'
 
 async function seedUser() {
   console.log(`\n--- SEEDING ADMIN USER ---`)
