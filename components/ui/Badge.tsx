@@ -12,12 +12,12 @@ export const SEVERITY_CONFIG: Record<BugSeverity, { label: string; icon: string;
   high: {
     label: 'High',
     icon: '🟠',
-    className: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/40',
+    className: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/40',
   },
   medium: {
     label: 'Medium',
     icon: '🟡',
-    className: 'text-slate-600 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-800/60 border-slate-200 dark:border-zinc-700',
+    className: 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/40 border-yellow-200 dark:border-yellow-900/40',
   },
   low: {
     label: 'Low',

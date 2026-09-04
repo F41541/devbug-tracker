@@ -14,6 +14,7 @@ interface ApiKeyPromptModalProps {
   onClose: () => void
   onKeyCreated: (key: ApiKey) => void
   notify: (msg: string, type?: 'success' | 'error' | 'info') => void
+  isGuest?: boolean
 }
 
 export function ApiKeyPromptModal({
@@ -21,6 +22,7 @@ export function ApiKeyPromptModal({
   onClose,
   onKeyCreated,
   notify,
+  isGuest = false,
 }: ApiKeyPromptModalProps) {
   const [name, setName] = useState('Claude Code CLI')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -33,10 +35,37 @@ export function ApiKeyPromptModal({
 
     setIsSubmitting(true)
     try {
-      const res = await createApiKey(name.trim())
-      setCreatedSecret(res.rawSecret)
-      onKeyCreated(res.apiKey)
-      notify('API Key created successfully!', 'success')
+      if (isGuest) {
+        const randHex = () => Math.random().toString(16).substring(2).padEnd(8, '0')
+        const h1 = (randHex() + randHex()).slice(0, 16)
+        const h2 = randHex().slice(0, 6)
+        const h3 = randHex().slice(0, 8)
+        const rawSecret = `devbug-${h1}-${h2}-${h3}`
+        const newKey: ApiKey = {
+          id: String(Date.now()),
+          name: name.trim(),
+          key_prefix: `devbug-${h1.slice(0, 4)}...`,
+          created_at: new Date().toISOString(),
+          last_used_at: null,
+        }
+        if (typeof window !== 'undefined') {
+          try {
+            const stored = localStorage.getItem('devbug_guest_api_keys')
+            const list = stored ? JSON.parse(stored) : []
+            localStorage.setItem('devbug_guest_api_keys', JSON.stringify([newKey, ...list]))
+          } catch {
+            // ignore
+          }
+        }
+        setCreatedSecret(rawSecret)
+        onKeyCreated(newKey)
+        notify('API Key created successfully!', 'success')
+      } else {
+        const res = await createApiKey(name.trim())
+        setCreatedSecret(res.rawSecret)
+        onKeyCreated(res.apiKey)
+        notify('API Key created successfully!', 'success')
+      }
     } catch (err: any) {
       notify(err.message || 'Failed to create API key', 'error')
     } finally {

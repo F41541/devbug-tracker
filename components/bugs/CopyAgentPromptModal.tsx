@@ -17,6 +17,7 @@ interface CopyAgentPromptModalProps {
   apiKeys?: ApiKey[]
   onKeyCreated?: (key: ApiKey) => void
   notify: (msg: string, type?: 'success' | 'error' | 'info') => void
+  isGuest?: boolean
 }
 
 export function CopyAgentPromptModal({
@@ -28,6 +29,7 @@ export function CopyAgentPromptModal({
   apiKeys = [],
   onKeyCreated,
   notify,
+  isGuest = false,
 }: CopyAgentPromptModalProps) {
   const [copied, setCopied] = useState(false)
   const [baseUrl, setBaseUrl] = useState('')
@@ -45,24 +47,10 @@ export function CopyAgentPromptModal({
     setCurrentApiKeys(apiKeys)
   }, [apiKeys])
 
-  // Cari key aktif default dari persistent storage atau list
+  // Cari key aktif default dari session atau list prefix
   useEffect(() => {
     if (currentApiKeys.length > 0) {
-      // Ambil key rahasia yang tersimpan di browser localStorage jika ada
-      let persistentSecret: string | null = null
-      if (typeof window !== 'undefined') {
-        try {
-          const stored = localStorage.getItem('devbug_local_api_secrets')
-          if (stored) {
-            const parsed = JSON.parse(stored)
-            persistentSecret = parsed[currentApiKeys[0].id] || null
-          }
-        } catch {
-          // ignore
-        }
-      }
-
-      const activeSecret = persistentSecret || currentApiKeys[0].raw_key || currentApiKeys[0].key_prefix
+      const activeSecret = currentApiKeys[0].raw_key || currentApiKeys[0].key_prefix
       setSelectedKey(activeSecret)
     } else {
       setSelectedKey('')
@@ -80,7 +68,7 @@ export function CopyAgentPromptModal({
   function handleCopy() {
     if (!hasApiKey) {
       setShowCreateKeyModal(true)
-      notify('API Key diperlukan! Silakan buat API Key terlebih dahulu.', 'error')
+      notify('API Key is required! Please generate an API Key first.', 'error')
       return
     }
 
@@ -101,7 +89,7 @@ export function CopyAgentPromptModal({
       onKeyCreated(newKey)
     }
     setShowCreateKeyModal(false)
-    notify('API Key berhasil dibuat dan otomatis terpasang pada prompt!', 'success')
+    notify('API Key successfully created and linked to prompt!', 'success')
   }
 
   return (
@@ -137,10 +125,10 @@ export function CopyAgentPromptModal({
                 <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
                 <div>
                   <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                    API Key Diperlukan
+                    API Key Required
                   </p>
                   <p className="text-[11px] text-amber-700 dark:text-amber-400">
-                    Anda belum memiliki API Key. Buat API Key sekarang agar prompt dapat disalin dan disinkronkan.
+                    You do not have an active API Key. Create an API Key now to copy and synchronize prompts.
                   </p>
                 </div>
               </div>
@@ -152,7 +140,7 @@ export function CopyAgentPromptModal({
                 className="shrink-0 flex items-center gap-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Buat API Key</span>
+                <span>Create API Key</span>
               </Button>
             </div>
           ) : (
@@ -222,7 +210,7 @@ export function CopyAgentPromptModal({
                             ? 'bg-emerald-500 text-white border border-emerald-600'
                             : 'bg-white/90 dark:bg-zinc-800/90 hover:bg-slate-100 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700'
                       }`}
-                      title={!hasApiKey ? 'Buat API Key terlebih dahulu untuk menyalin prompt' : 'Copy Prompt'}
+                      title={!hasApiKey ? 'Please create an API Key first to copy prompt' : 'Copy Prompt'}
                     >
                       {copied ? (
                         <>
@@ -296,6 +284,7 @@ export function CopyAgentPromptModal({
           onClose={() => setShowCreateKeyModal(false)}
           onKeyCreated={handleNewKeyCreated}
           notify={notify}
+          isGuest={isGuest}
         />
       )}
     </>

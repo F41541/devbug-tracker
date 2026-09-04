@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Sparkles, Paperclip } from 'lucide-react'
+import { Paperclip } from 'lucide-react'
 import { BugItem, BugStatus } from '@/types'
 import { SeverityBadge } from '@/components/ui/Badge'
 
@@ -13,7 +13,7 @@ interface BugCardProps {
   onDragEnd?: () => void
   onView: () => void
   onStatusChange: (id: string, status: BugStatus) => void
-  onCopyAI: () => void
+  onCopyAI?: () => void
 }
 
 export function BugCard({
@@ -24,7 +24,6 @@ export function BugCard({
   onDragEnd,
   onView,
   onStatusChange,
-  onCopyAI,
 }: BugCardProps) {
   const isClosed = bug.status === 'closed'
   const bugDisplayId = displayNumber !== undefined ? displayNumber : bug.id
@@ -47,7 +46,7 @@ export function BugCard({
         isDragging ? 'opacity-30 scale-95 border-dashed border-indigo-400 pointer-events-none' : ''
       }`}
     >
-      {/* Top Header: ID + Project + Severity + AI button */}
+      {/* Top Header: ID + Project + Severity */}
       <div className="flex items-center justify-between gap-1.5">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="font-mono text-[11px] text-slate-400 dark:text-zinc-500 font-semibold">
@@ -62,17 +61,6 @@ export function BugCard({
 
         <div className="flex items-center gap-1 flex-shrink-0">
           <SeverityBadge severity={bug.severity} />
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onCopyAI()
-            }}
-            title="Copy Prompt for AI Agent"
-            className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition"
-          >
-            <Sparkles className="w-3 h-3" />
-          </button>
         </div>
       </div>
 

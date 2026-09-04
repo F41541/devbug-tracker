@@ -8,9 +8,10 @@ DROP TABLE IF EXISTS public.bug_items CASCADE;
 DROP TABLE IF EXISTS public.api_keys CASCADE;
 DROP TABLE IF EXISTS public.projects CASCADE;
 
--- 1. Create Projects Table (UUID Primary Key)
+-- 1. Create Projects Table (UUID Primary Key & User ID)
 CREATE TABLE public.projects (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
@@ -67,10 +68,10 @@ CREATE TABLE public.attachments (
 -- 4. Create API Keys Table (UUID Primary Key)
 CREATE TABLE public.api_keys (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     key_hash VARCHAR(255) NOT NULL UNIQUE,
     key_prefix VARCHAR(50) NOT NULL,
-    raw_key TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     last_used_at TIMESTAMPTZ
 );
@@ -81,18 +82,42 @@ ALTER TABLE public.bug_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.api_keys ENABLE ROW LEVEL SECURITY;
 
--- 6. Create RLS Policies (Allow Authenticated Admin full access)
-CREATE POLICY "Allow authenticated users all on projects" ON public.projects
-    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- 6. Create RLS Policies (Isolated by User Ownership)
+CREATE POLICY "Users can manage own projects" ON public.projects
+    FOR ALL TO authenticated
+    USING (user_id = auth.uid() OR user_id IS NULL)
+    WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
 
-CREATE POLICY "Allow authenticated users all on bug_items" ON public.bug_items
-    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Users can manage bugs in accessible projects" ON public.bug_items
+    FOR ALL TO authenticated
+    USING (
+      project_id IN (SELECT id FROM public.projects WHERE user_id = auth.uid() OR user_id IS NULL)
+    )
+    WITH CHECK (
+      project_id IN (SELECT id FROM public.projects WHERE user_id = auth.uid() OR user_id IS NULL)
+    );
 
-CREATE POLICY "Allow authenticated users all on attachments" ON public.attachments
-    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Users can manage attachments in accessible bugs" ON public.attachments
+    FOR ALL TO authenticated
+    USING (
+      bug_item_id IN (
+        SELECT b.id FROM public.bug_items b
+        JOIN public.projects p ON b.project_id = p.id
+        WHERE p.user_id = auth.uid() OR p.user_id IS NULL
+      )
+    )
+    WITH CHECK (
+      bug_item_id IN (
+        SELECT b.id FROM public.bug_items b
+        JOIN public.projects p ON b.project_id = p.id
+        WHERE p.user_id = auth.uid() OR p.user_id IS NULL
+      )
+    );
 
-CREATE POLICY "Allow authenticated users all on api_keys" ON public.api_keys
-    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Users can manage own api_keys" ON public.api_keys
+    FOR ALL TO authenticated
+    USING (user_id = auth.uid() OR user_id IS NULL)
+    WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
 
 -- 7. Setup Supabase Storage Bucket for screenshots
 INSERT INTO storage.buckets (id, name, public, allowed_mime_types, file_size_limit) 

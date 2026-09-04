@@ -47,8 +47,11 @@ export async function getBugs(filters?: {
     query = query.eq('severity', filters.severity)
   }
   if (filters?.search) {
-    const s = `%${filters.search.trim()}%`
-    query = query.or(`title.ilike.${s},description.ilike.${s},stack_trace.ilike.${s},fix_hint.ilike.${s}`)
+    const cleanSearch = filters.search.trim().replace(/[%_(),]/g, '')
+    if (cleanSearch) {
+      const s = `%${cleanSearch}%`
+      query = query.or(`title.ilike.${s},description.ilike.${s},stack_trace.ilike.${s},fix_hint.ilike.${s}`)
+    }
   }
 
   const { data, error } = await query
@@ -285,7 +288,7 @@ export async function createProject(rawFormData: {
   package_manager?: string | null
   test_command?: string | null
 }) {
-  const { supabase } = await requireAuth()
+  const { supabase, user } = await requireAuth()
 
   const parsed = projectInputSchema.safeParse(rawFormData)
   if (!parsed.success) {
@@ -303,6 +306,7 @@ export async function createProject(rawFormData: {
   const { data, error } = await supabase
     .from('projects')
     .insert({
+      user_id: user.id,
       name: formData.name,
       slug: `${baseSlug}-${Date.now().toString().slice(-4)}`,
       color: formData.color || '#6366f1',

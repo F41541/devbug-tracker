@@ -28,15 +28,15 @@ export default async function ProjectWorkspacePage({ params }: ProjectWorkspaceP
     notFound()
   }
 
-  const [allProjects, projectBugs, apiKeys] = await Promise.all([
+  const [allProjects, allBugs, apiKeys] = await Promise.all([
     getProjects(),
-    getBugs({ project_id: project.id }),
+    getBugs(),
     getApiKeys().catch(() => []),
   ])
 
   return (
     <DashboardClient
-      initialBugs={projectBugs}
+      initialBugs={allBugs}
       initialProjects={allProjects}
       initialSelectedProjectId={project.id}
       userEmail={user.email}

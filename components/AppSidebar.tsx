@@ -24,6 +24,7 @@ interface AppSidebarProps {
   onSelectProject?: (id: string | null) => void
   onNewBug?: () => void
   onManageProjects?: () => void
+  onRequireAuth?: (featureName?: string) => void
 }
 
 export function AppSidebar({
@@ -35,6 +36,7 @@ export function AppSidebar({
   onSelectProject,
   onNewBug,
   onManageProjects,
+  onRequireAuth,
 }: AppSidebarProps) {
   const pathname = usePathname()
   const isRoot = pathname === '/'
@@ -217,17 +219,32 @@ export function AppSidebar({
           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 px-2.5 mb-1.5">
             Tools & Config
           </div>
-          <Link
-            href="/settings"
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
-              pathname === '/settings'
-                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
-                : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
-            }`}
-          >
-            <Settings className="w-4 h-4 text-slate-500" />
-            <span>Settings</span>
-          </Link>
+          {isGuest && onRequireAuth ? (
+            <button
+              type="button"
+              onClick={() => onRequireAuth('Settings')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
+                pathname === '/settings'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+              }`}
+            >
+              <Settings className="w-4 h-4 text-slate-500" />
+              <span>Settings</span>
+            </button>
+          ) : (
+            <Link
+              href="/settings"
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
+                pathname === '/settings'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
+              }`}
+            >
+              <Settings className="w-4 h-4 text-slate-500" />
+              <span>Settings</span>
+            </Link>
+          )}
         </div>
       </div>
 

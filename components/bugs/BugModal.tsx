@@ -71,6 +71,16 @@ export function BugModal({
   }, [show, bug, selectedProjectId, projects])
 
   useEffect(() => {
+    return () => {
+      pendingFiles.forEach((p) => {
+        if (p.preview.startsWith('blob:')) {
+          URL.revokeObjectURL(p.preview)
+        }
+      })
+    }
+  }, [pendingFiles])
+
+  useEffect(() => {
     const textToScan = `${location} ${errorDescription}`
     if (!textToScan.trim()) {
       if (!bug) setDetectedFiles([])

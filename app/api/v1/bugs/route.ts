@@ -3,22 +3,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import crypto from 'crypto'
 
 async function authenticateApiKey(req: NextRequest) {
-  const isLocalDev =
-    req.nextUrl.hostname === 'localhost' ||
-    req.nextUrl.hostname === '127.0.0.1' ||
-    req.nextUrl.hostname === '::1'
-
   const authHeader = req.headers.get('authorization')
   const xApiKey = req.headers.get('x-api-key')
   let rawKey = xApiKey
 
   if (!rawKey && authHeader?.startsWith('Bearer ')) {
     rawKey = authHeader.substring(7).trim()
-  }
-
-  // Local development bypass if no key provided
-  if (!rawKey && isLocalDev) {
-    return { id: 0, name: 'Local Dev Agent' }
   }
 
   if (!rawKey) return null
@@ -34,12 +24,14 @@ async function authenticateApiKey(req: NextRequest) {
 
   if (error || !keyRecord) return null
 
-  // Update last_used_at asynchronously
-  supabase
-    .from('api_keys')
-    .update({ last_used_at: new Date().toISOString() })
-    .eq('id', keyRecord.id)
-    .then()
+  try {
+    await supabase
+      .from('api_keys')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('id', keyRecord.id)
+  } catch (err) {
+    console.error('Failed to update API key last_used_at:', err)
+  }
 
   return keyRecord
 }
@@ -136,6 +128,29 @@ export async function PATCH(req: NextRequest) {
         patchPayload[field] = updateFields[field]
       }
     })
+
+    if (updateFields.failed_attempt) {
+      const { data: currentBug } = await supabase
+        .from('bug_items')
+        .select('failed_attempts')
+        .eq('id', id)
+        .single()
+
+      const priorAttempts = Array.isArray(currentBug?.failed_attempts)
+        ? currentBug.failed_attempts
+        : []
+
+      patchPayload.failed_attempts = [
+        ...priorAttempts,
+        {
+          timestamp: new Date().toISOString(),
+          agent: keyRecord.name || 'DevBug Agent',
+          hypothesis: updateFields.failed_attempt.hypothesis || 'Attempted fix',
+          files_modified: updateFields.failed_attempt.files_modified || [],
+          failure_reason: updateFields.failed_attempt.failure_reason || 'Unknown reason',
+        },
+      ]
+    }
 
     if (patchPayload.status === 'resolved') {
       patchPayload.resolved_at = new Date().toISOString()

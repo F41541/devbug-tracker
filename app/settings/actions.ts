@@ -20,39 +20,29 @@ async function requireAuth() {
 }
 
 export async function getApiKeys(): Promise<ApiKey[]> {
-  const { supabase } = await requireAuth()
+  const { supabase, user } = await requireAuth()
   
-  // Coba ambil dengan raw_key jika kolom sudah ada di database
   const { data, error } = await supabase
     .from('api_keys')
-    .select('id, name, key_prefix, raw_key, created_at, last_used_at')
-    .order('created_at', { ascending: false })
-
-  if (!error && data) {
-    return data as ApiKey[]
-  }
-
-  // Fallback tanpa raw_key jika kolom belum dieksekusi di Supabase
-  const { data: fallbackData, error: fallbackError } = await supabase
-    .from('api_keys')
     .select('id, name, key_prefix, created_at, last_used_at')
+    .or(`user_id.eq.${user.id},user_id.is.null`)
     .order('created_at', { ascending: false })
 
-  if (fallbackError) {
-    console.error('Failed to fetch API keys:', fallbackError.message)
+  if (error) {
+    console.error('Failed to fetch API keys:', error.message)
     return []
   }
 
-  return fallbackData as ApiKey[]
+  return (data || []) as ApiKey[]
 }
 
 export async function createApiKey(name: string): Promise<{ apiKey: ApiKey; rawSecret: string }> {
-  const { supabase } = await requireAuth()
+  const { supabase, user } = await requireAuth()
   if (!name || !name.trim()) {
     throw new Error('API Key name is required.')
   }
 
-  // Generate exact format: devbug-xxxxxxxxxxxxxxxx-xxxxxx-xxxxxxxx (total 39 chars)
+  // Generate format: devbug-xxxxxxxxxxxxxxxx-xxxxxx-xxxxxxxx (total 39 chars)
   const hex1 = crypto.randomBytes(8).toString('hex') // 16 chars
   const hex2 = crypto.randomBytes(3).toString('hex') // 6 chars
   const hex3 = crypto.randomBytes(4).toString('hex') // 8 chars
@@ -64,37 +54,17 @@ export async function createApiKey(name: string): Promise<{ apiKey: ApiKey; rawS
   const { data, error } = await supabase
     .from('api_keys')
     .insert({
+      user_id: user.id,
       name: name.trim(),
       key_hash: keyHash,
       key_prefix: keyPrefix,
-      raw_key: rawSecret,
     })
-    .select('id, name, key_prefix, raw_key, created_at, last_used_at')
+    .select('id, name, key_prefix, created_at, last_used_at')
     .single()
 
   if (error) {
-    console.error('Failed to create API key with raw_key, trying fallback without raw_key column:', error.message)
-    // Fallback if column raw_key does not exist yet on DB
-    const { data: fallbackData, error: fallbackError } = await supabase
-      .from('api_keys')
-      .insert({
-        name: name.trim(),
-        key_hash: keyHash,
-        key_prefix: keyPrefix,
-      })
-      .select('id, name, key_prefix, created_at, last_used_at')
-      .single()
-
-    if (fallbackError) {
-      console.error('Failed to create API key:', fallbackError.message)
-      throw new Error('Failed to create API key: ' + fallbackError.message)
-    }
-
-    revalidatePath('/settings')
-    return {
-      apiKey: { ...(fallbackData as ApiKey), raw_key: rawSecret },
-      rawSecret,
-    }
+    console.error('Failed to create API key:', error.message)
+    throw new Error('Failed to create API key: ' + error.message)
   }
 
   revalidatePath('/settings')

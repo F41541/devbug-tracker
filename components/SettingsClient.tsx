@@ -61,22 +61,6 @@ export default function SettingsClient({
   const [copiedItem, setCopiedItem] = useState<string | null>(null)
   const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({})
   const [sessionSecrets, setSessionSecrets] = useState<Record<string, string>>({})
-
-  // Persistent map for full secrets in this browser
-  const [persistentSecrets, setPersistentSecrets] = useState<Record<string, string>>({})
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('devbug_local_api_secrets')
-        if (stored) {
-          setPersistentSecrets(JSON.parse(stored))
-        }
-      } catch {
-        // ignore
-      }
-    }
-  }, [])
   // Account security
   const [email, setEmail] = useState(userEmail || '')
   const [currentEmailState, setCurrentEmailState] = useState(userEmail || '')
@@ -136,7 +120,6 @@ export default function SettingsClient({
           id: String(Date.now()),
           name: keyName.trim(),
           key_prefix: `devbug-${h1.slice(0, 4)}...`,
-          raw_key: rawSecret,
           created_at: new Date().toISOString(),
           last_used_at: null,
         }
@@ -145,11 +128,6 @@ export default function SettingsClient({
         localStorage.setItem('devbug_guest_api_keys', JSON.stringify(updated))
         setCreatedSecret(rawSecret)
         setSessionSecrets((prev) => ({ ...prev, [newKey.id]: rawSecret }))
-        setPersistentSecrets((prev) => {
-          const next = { ...prev, [newKey.id]: rawSecret }
-          localStorage.setItem('devbug_local_api_secrets', JSON.stringify(next))
-          return next
-        })
         setKeyName('')
         showToast('API Key generated successfully (Guest Mode)', 'success')
       } else {
@@ -157,11 +135,6 @@ export default function SettingsClient({
         setApiKeys((prev) => [res.apiKey, ...prev])
         setCreatedSecret(res.rawSecret)
         setSessionSecrets((prev) => ({ ...prev, [res.apiKey.id]: res.rawSecret }))
-        setPersistentSecrets((prev) => {
-          const next = { ...prev, [res.apiKey.id]: res.rawSecret }
-          localStorage.setItem('devbug_local_api_secrets', JSON.stringify(next))
-          return next
-        })
         setKeyName('')
         showToast('API Key generated successfully', 'success')
       }
@@ -296,7 +269,7 @@ export default function SettingsClient({
               Application Settings
             </h1>
             <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-              Kelola kunci integrasi API automation, agen AI, dan preferensi akun keamanan Anda.
+              Manage your API automation integration keys, AI agents, and account security preferences.
             </p>
           </div>
 
@@ -323,7 +296,7 @@ export default function SettingsClient({
                   <Check className="w-4 h-4 text-emerald-500" /> Key Generated Successfully!
                 </h4>
                 <p className="text-xs text-emerald-800 dark:text-emerald-400 mb-3">
-                  Salin API Key ini sekarang. Demi alasan keamanan, Anda tidak akan dapat melihatnya lagi setelah menutup kotak ini.
+                  Copy this API Key now. For security reasons, you will not be able to view it again after closing this box.
                 </p>
                 <div className="flex items-center gap-2 max-w-xl">
                   <Input
@@ -357,7 +330,7 @@ export default function SettingsClient({
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-zinc-400">
-                Gunakan URL endpoint ini untuk membuat atau memperbarui status bug via AI agent atau script automation.
+                Use this API endpoint URL to create or update bug statuses via AI agents or automation scripts.
               </p>
               <div className="flex items-center gap-2">
                 <div className="flex-1 px-3 py-2 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 font-mono text-xs text-slate-700 dark:text-zinc-300 select-all overflow-x-auto">
@@ -374,7 +347,7 @@ export default function SettingsClient({
                   ) : (
                     <Copy className="w-4 h-4" />
                   )}
-                  <span>{copiedItem === 'endpoint' ? 'Tersalin' : 'Salin'}</span>
+                  <span>{copiedItem === 'endpoint' ? 'Copied' : 'Copy'}</span>
                 </Button>
               </div>
             </div>
@@ -389,7 +362,7 @@ export default function SettingsClient({
                       Active API Keys & Generation
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-zinc-400">
-                      Buat dan kelola kunci otorisasi API untuk sinkronisasi bug via cURL atau agen AI.
+                      Create and manage API authorization keys for syncing bugs via cURL or AI agents.
                     </p>
                   </div>
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-medium self-start sm:self-auto">
@@ -400,7 +373,7 @@ export default function SettingsClient({
                 {/* Inline Create Form */}
                 <form onSubmit={handleCreateKey} className="flex flex-col sm:flex-row gap-3 pt-1">
                   <Input
-                    placeholder="Nama kunci baru (misal: Claude Code, Cursor, CI/CD)..."
+                    placeholder="New key name (e.g. Claude Code, Cursor, CI/CD)..."
                     value={keyName}
                     onChange={(e) => setKeyName(e.target.value)}
                     disabled={isCreatingKey}
@@ -412,7 +385,7 @@ export default function SettingsClient({
                     disabled={isCreatingKey || !keyName.trim()}
                     className="shrink-0"
                   >
-                    {isCreatingKey ? 'Membuat...' : 'Generate Key'}
+                    {isCreatingKey ? 'Generating...' : 'Generate Key'}
                   </Button>
                 </form>
               </div>
@@ -422,24 +395,15 @@ export default function SettingsClient({
                 <div className="p-8 text-center">
                   <Key className="w-8 h-8 text-slate-300 dark:text-zinc-600 mx-auto mb-2 opacity-60" />
                   <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">
-                    Belum ada API Key aktif. Buat kunci di form atas untuk menghubungkan agen AI.
+                    No active API Keys yet. Create a key in the form above to connect your AI agent.
                   </p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100 dark:divide-zinc-800/80">
                   {apiKeys.map((key) => {
                     const isRevealed = !!revealedKeys[key.id]
-                    // Prioritaskan raw_key dari database, sessionSecrets, atau persistentSecrets local storage
-                    const fullSecret =
-                      key.raw_key ||
-                      persistentSecrets[key.id] ||
-                      sessionSecrets[key.id] ||
-                      key.key_prefix.replace(/\.\.\.$/, '')
-                    const copyTarget =
-                      key.raw_key ||
-                      persistentSecrets[key.id] ||
-                      sessionSecrets[key.id] ||
-                      key.key_prefix
+                    const sessionSecret = sessionSecrets[key.id]
+                    const copyTarget = sessionSecret || key.key_prefix
 
                     return (
                       <div
@@ -462,35 +426,42 @@ export default function SettingsClient({
                           </Button>
                         </div>
 
-                        {/* Baris 2: API Key dengan format sensor devbug-********************************, unmask tampilkan semua 39 karakter */}
+                        {/* Baris 2: API Key Prefix / Secret if in session */}
                         <div className="flex items-center gap-2 max-w-xl">
                           <div className="flex-1 flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 font-mono text-xs overflow-hidden">
-                            {isRevealed ? (
-                              <span className="text-slate-800 dark:text-zinc-200 select-all tracking-normal">
-                                {fullSecret}
-                              </span>
+                            {sessionSecret ? (
+                              isRevealed ? (
+                                <span className="text-slate-800 dark:text-zinc-200 select-all tracking-normal">
+                                  {sessionSecret}
+                                </span>
+                              ) : (
+                                <span className="text-slate-500 dark:text-zinc-400 select-none font-mono">
+                                  devbug-********************************
+                                </span>
+                              )
                             ) : (
-                              <span className="text-slate-500 dark:text-zinc-400 select-none font-mono">
-                                devbug-********************************
+                              <span className="text-slate-700 dark:text-zinc-300 font-mono select-all">
+                                {key.key_prefix}
                               </span>
                             )}
                           </div>
 
-                          {/* Tombol Mata (Toggle Reveal) */}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleRevealKey(key.id)}
-                            className="h-8 px-2.5 text-slate-600 dark:text-zinc-400"
-                            title={isRevealed ? 'Sembunyikan API Key' : 'Tampilkan API Key'}
-                          >
-                            {isRevealed ? (
-                              <EyeOff className="w-3.5 h-3.5" />
-                            ) : (
-                              <Eye className="w-3.5 h-3.5" />
-                            )}
-                          </Button>
+                          {sessionSecret && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleRevealKey(key.id)}
+                              className="h-8 px-2.5 text-slate-600 dark:text-zinc-400"
+                              title={isRevealed ? 'Hide API Key' : 'Show API Key'}
+                            >
+                              {isRevealed ? (
+                                <EyeOff className="w-3.5 h-3.5" />
+                              ) : (
+                                <Eye className="w-3.5 h-3.5" />
+                              )}
+                            </Button>
+                          )}
 
                           {/* Tombol Salin */}
                           <Button
@@ -499,7 +470,7 @@ export default function SettingsClient({
                             size="sm"
                             onClick={() => copyToClipboard(copyTarget, `key_${key.id}`)}
                             className="h-8 px-2.5 text-slate-600 dark:text-zinc-400"
-                            title="Salin API Key"
+                            title="Copy API Key"
                           >
                             {copiedItem === `key_${key.id}` ? (
                               <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -511,14 +482,14 @@ export default function SettingsClient({
 
                         {/* Baris 3: Metadata dibuat pada */}
                         <div className="text-[11px] text-slate-400 dark:text-zinc-500">
-                          Dibuat pada{' '}
-                          {new Date(key.created_at).toLocaleDateString('id-ID', {
+                          Created on{' '}
+                          {new Date(key.created_at).toLocaleDateString('en-US', {
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',
                           })}
                           {key.last_used_at && (
-                            <span> • Terakhir dipakai: {new Date(key.last_used_at).toLocaleDateString('id-ID')}</span>
+                            <span> • Last used: {new Date(key.last_used_at).toLocaleDateString('en-US')}</span>
                           )}
                         </div>
                       </div>
@@ -559,7 +530,7 @@ export default function SettingsClient({
                   <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-zinc-500 bg-slate-50 dark:bg-zinc-800/60 px-3 py-1.5 rounded-lg border border-slate-200/60 dark:border-zinc-700/60">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>
-                      Terdaftar sejak {new Date(createdAt).toLocaleDateString('id-ID', {
+                      Registered since {new Date(createdAt).toLocaleDateString('en-US', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric',
@@ -576,11 +547,11 @@ export default function SettingsClient({
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     <h3 className="text-sm font-bold text-slate-900 dark:text-zinc-100">
-                      Ubah Email
+                      Change Email
                     </h3>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-zinc-400">
-                    Supabase akan mengirimkan email konfirmasi ke alamat email baru Anda.
+                    Supabase will send a confirmation link to your new email address.
                   </p>
 
                   <form onSubmit={handleUpdateEmail} className="space-y-3">
@@ -589,7 +560,7 @@ export default function SettingsClient({
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Masukkan alamat email baru"
+                      placeholder="Enter new email address"
                       className="text-xs"
                     />
                     <Button
@@ -598,7 +569,7 @@ export default function SettingsClient({
                       disabled={isUpdatingEmail || !email || email === currentEmailState}
                       className="w-full text-xs"
                     >
-                      {isUpdatingEmail ? 'Menyimpan...' : 'Simpan Email Baru'}
+                      {isUpdatingEmail ? 'Saving...' : 'Save New Email'}
                     </Button>
                   </form>
                 </div>
@@ -608,11 +579,11 @@ export default function SettingsClient({
                   <div className="flex items-center gap-2">
                     <KeyRound className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     <h3 className="text-sm font-bold text-slate-900 dark:text-zinc-100">
-                      Ganti Password
+                      Change Password
                     </h3>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-zinc-400">
-                    Pastikan password baru Anda minimal 6 karakter.
+                    Make sure your new password is at least 6 characters.
                   </p>
 
                   <form onSubmit={handleUpdatePassword} className="space-y-3">
@@ -621,7 +592,7 @@ export default function SettingsClient({
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Password baru (min. 6 karakter)"
+                      placeholder="New password (min. 6 characters)"
                       className="text-xs"
                     />
                     <Input
@@ -629,7 +600,7 @@ export default function SettingsClient({
                       required
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Konfirmasi password baru"
+                      placeholder="Confirm new password"
                       className="text-xs"
                     />
                     <Button
@@ -638,7 +609,7 @@ export default function SettingsClient({
                       disabled={isUpdatingPassword || !password}
                       className="w-full text-xs"
                     >
-                      {isUpdatingPassword ? 'Memperbarui...' : 'Perbarui Password'}
+                      {isUpdatingPassword ? 'Updating...' : 'Update Password'}
                     </Button>
                   </form>
                 </div>
@@ -648,13 +619,13 @@ export default function SettingsClient({
             <div className="p-5 rounded-2xl bg-slate-100 dark:bg-zinc-900 border border-dashed border-slate-300 dark:border-zinc-800 text-center space-y-2">
               <Layers className="w-6 h-6 text-slate-400 mx-auto" />
               <p className="text-xs text-slate-600 dark:text-zinc-400 font-medium">
-                Anda berada di mode Guest (penyimpanan lokal).
+                You are currently in Guest mode (local browser storage).
               </p>
               <Link
                 href="/login"
                 className="inline-block px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-xs transition"
               >
-                Login sebagai Admin
+                Sign in as Admin
               </Link>
             </div>
           )}

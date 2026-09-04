@@ -9,7 +9,7 @@ interface KanbanViewProps {
   projectNumberMap?: Map<string, number>
   onView: (bug: BugItem) => void
   onStatusChange: (id: string, status: BugStatus) => void
-  onCopyAI: (bug: BugItem) => void
+  onCopyAI?: (bug: BugItem) => void
 }
 
 export function KanbanView({
@@ -17,7 +17,6 @@ export function KanbanView({
   projectNumberMap,
   onView,
   onStatusChange,
-  onCopyAI,
 }: KanbanViewProps) {
   const [draggedBugId, setDraggedBugId] = useState<string | null>(null)
   const [activeDropCol, setActiveDropCol] = useState<BugStatus | null>(null)
@@ -112,7 +111,6 @@ export function KanbanView({
                     }}
                     onView={() => onView(bug)}
                     onStatusChange={onStatusChange}
-                    onCopyAI={() => onCopyAI(bug)}
                   />
                 ))
               )}

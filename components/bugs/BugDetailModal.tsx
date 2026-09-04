@@ -16,7 +16,7 @@ interface BugDetailModalProps {
   onClose: () => void
   onEdit: (bug: BugItem) => void
   onDelete: (bug: BugItem) => void
-  onCopyAI: (bug: BugItem) => void
+  onCopyAI?: (bug: BugItem) => void
 }
 
 export function BugDetailModal({
@@ -26,22 +26,11 @@ export function BugDetailModal({
   onClose,
   onEdit,
   onDelete,
-  onCopyAI,
 }: BugDetailModalProps) {
   const bugDisplayId = displayNumber !== undefined ? displayNumber : bug.id
 
   const headerActions = (
     <div className="flex items-center gap-1.5">
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onCopyAI(bug)}
-        icon={<Sparkles className="w-3.5 h-3.5 text-violet-500" />}
-        className="text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 border-violet-200 dark:border-violet-800/60"
-      >
-        <span>Copy for AI</span>
-      </Button>
       <button
         type="button"
         onClick={() => onEdit(bug)}

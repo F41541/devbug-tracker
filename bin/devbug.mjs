@@ -149,7 +149,7 @@ async function main() {
         headers,
         body: JSON.stringify({
           id: bugId,
-          investigation_state: 'attempt_failed',
+          investigation_state: 'fix_blocked',
           failed_attempt: {
             hypothesis: 'Attempted fix',
             failure_reason: reason,

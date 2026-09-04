@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Sparkles, Edit2, Trash2 } from 'lucide-react'
+import { Edit2, Trash2 } from 'lucide-react'
 import { BugItem, BugStatus } from '@/types'
 import { SeverityBadge } from '@/components/ui/Badge'
 
@@ -12,7 +12,7 @@ interface ListViewProps {
   onEdit: (bug: BugItem) => void
   onDelete: (bug: BugItem) => void
   onStatusChange: (id: string, status: BugStatus) => void
-  onCopyAI: (bug: BugItem) => void
+  onCopyAI?: (bug: BugItem) => void
 }
 
 export function ListView({
@@ -22,7 +22,6 @@ export function ListView({
   onEdit,
   onDelete,
   onStatusChange,
-  onCopyAI,
 }: ListViewProps) {
   return (
     <div className="bg-white dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
@@ -105,14 +104,6 @@ export function ListView({
                   </td>
                   <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        onClick={() => onCopyAI(bug)}
-                        className="p-1.5 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-950/40 text-slate-500 dark:text-zinc-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-                        title="Copy Prompt for AI Agent"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                      </button>
                       <button
                         type="button"
                         onClick={() => onEdit(bug)}

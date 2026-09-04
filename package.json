@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "tsc --noEmit",
     "mcp": "node bin/mcp-server.mjs",
     "seed": "node --env-file=.env.local scripts/seed.mjs"
   },

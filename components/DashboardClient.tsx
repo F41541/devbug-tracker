@@ -17,6 +17,7 @@ import {
   Menu,
   Sparkles,
   Bot,
+  Lock,
 } from 'lucide-react'
 import { ProjectsHub } from '@/components/ProjectsHub'
 import { AppSidebar } from '@/components/AppSidebar'
@@ -26,8 +27,9 @@ import { Button } from '@/components/ui/Button'
 import { KanbanView, ListView, BugModal, BugDetailModal } from '@/components/bugs'
 import { ProjectManagerModal } from '@/components/projects'
 import { CopyAgentPromptModal } from '@/components/bugs/CopyAgentPromptModal'
+import { ApiKeyPromptModal } from '@/components/integrations/ApiKeyPromptModal'
+import { Modal } from '@/components/ui/Modal'
 import { logout } from '@/app/auth/actions'
-import { generateAIPromptForBug } from '@/lib/ai-prompt'
 import { updateBugStatus, deleteBug } from '@/app/actions'
 import { createClient } from '@/lib/supabase/client'
 import { BugItem, BugStatus, BugSeverity, Project, ApiKey } from '@/types'
@@ -151,6 +153,9 @@ export default function DashboardClient({
   const [isDeletingBug, setIsDeletingBug] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [showCopyAgentModal, setShowCopyAgentModal] = useState(false)
+  const [showApiKeyPromptModal, setShowApiKeyPromptModal] = useState(false)
+  const [showAuthRequiredModal, setShowAuthRequiredModal] = useState(false)
+  const [authRequiredFeature, setAuthRequiredFeature] = useState<string>('Feature')
 
   // Toast
   const [toast, setToast] = useState<ToastData | null>(null)
@@ -249,10 +254,6 @@ export default function DashboardClient({
           .select('*, project:projects(*), attachments(*)')
           .order('order', { ascending: true })
           .order('created_at', { ascending: false })
-
-        if (fixedWorkspace && selectedProject) {
-          query.eq('project_id', selectedProject)
-        }
 
         const { data: latestBugs } = await query
         if (latestBugs && Array.isArray(latestBugs)) {
@@ -435,13 +436,24 @@ export default function DashboardClient({
     }
   }
 
-  function copyBugForAI(bug: BugItem) {
-    const originUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
-    const prompt = generateAIPromptForBug(bug, null, {
-      baseUrl: originUrl,
-    })
-    navigator.clipboard.writeText(prompt)
-    showToast(`Bug #${bug.id} XML Dossier copied for AI!`, 'success')
+  function handleRequireAuth(featureName: string = 'this feature') {
+    setAuthRequiredFeature(featureName)
+    setShowAuthRequiredModal(true)
+    showToast(`Login required to use ${featureName}`, 'error')
+  }
+
+  function handleOpenCopyPrompt() {
+    if (isGuest) {
+      handleRequireAuth('Copy Prompt & AI Sync')
+      return
+    }
+    const hasKeys = apiKeys && apiKeys.length > 0
+    if (!hasKeys) {
+      setShowApiKeyPromptModal(true)
+      showToast('API Key required! Please generate an API Key first before copying.', 'error')
+      return
+    }
+    setShowCopyAgentModal(true)
   }
 
   return (
@@ -470,12 +482,13 @@ export default function DashboardClient({
         }}
         onManageProjects={() => {
           if (isGuest) {
-            showToast('Guest mode is limited to 1 local project. Sign in as admin to add projects.', 'error')
+            handleRequireAuth('Manage Projects')
             return
           }
           setEditingProject(null)
           setShowProjectModal(true)
         }}
+        onRequireAuth={handleRequireAuth}
       />
 
       {/* MAIN CONTENT WRAPPER */}
@@ -545,7 +558,7 @@ export default function DashboardClient({
                     type="button"
                     variant="primary"
                     size="sm"
-                    onClick={() => setShowCopyAgentModal(true)}
+                    onClick={handleOpenCopyPrompt}
                     icon={<Copy className="w-3.5 h-3.5" />}
                   >
                     <span>Copy</span>
@@ -570,7 +583,7 @@ export default function DashboardClient({
               }}
               onOpenNewProjectModal={() => {
                 if (isGuest) {
-                  showToast('Guest mode is limited to 1 local project. Sign in as admin to add projects.', 'error')
+                  handleRequireAuth('Add Project')
                   return
                 }
                 setEditingProject(null)
@@ -751,7 +764,6 @@ export default function DashboardClient({
                     setShowDetailModal(true)
                   }}
                   onStatusChange={handleStatusChange}
-                  onCopyAI={copyBugForAI}
                 />
               ) : (
                 <ListView
@@ -770,7 +782,6 @@ export default function DashboardClient({
                     setShowDeleteConfirm(true)
                   }}
                   onStatusChange={handleStatusChange}
-                  onCopyAI={copyBugForAI}
                 />
               )}
             </>
@@ -820,7 +831,6 @@ export default function DashboardClient({
             setBugToDelete(bug)
             setShowDeleteConfirm(true)
           }}
-          onCopyAI={copyBugForAI}
         />
       )}
 
@@ -869,7 +879,60 @@ export default function DashboardClient({
           apiKeys={apiKeys}
           onKeyCreated={(newKey) => setApiKeys((prev) => [newKey, ...prev])}
           notify={showToast}
+          isGuest={isGuest}
         />
+      )}
+
+      {/* API Key Prompt Modal when attempting to copy prompt without API Key */}
+      {showApiKeyPromptModal && (
+        <ApiKeyPromptModal
+          show={showApiKeyPromptModal}
+          onClose={() => setShowApiKeyPromptModal(false)}
+          onKeyCreated={(newKey) => {
+            setApiKeys((prev) => [newKey, ...prev])
+            setShowApiKeyPromptModal(false)
+            setShowCopyAgentModal(true)
+          }}
+          notify={showToast}
+          isGuest={isGuest}
+        />
+      )}
+
+      {/* Auth Required Modal for Guest Users trying to access protected actions */}
+      {showAuthRequiredModal && (
+        <Modal
+          show={showAuthRequiredModal}
+          onClose={() => setShowAuthRequiredModal(false)}
+          title="Admin Login Required"
+          description={`Please log in to your account to use ${authRequiredFeature}.`}
+          icon={<Lock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
+          maxWidthClass="max-w-md"
+        >
+          <div className="p-5 space-y-4">
+            <div className="p-3.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl space-y-1 text-xs text-amber-900 dark:text-amber-300">
+              <p className="font-bold">Authentication Required</p>
+              <p className="leading-relaxed text-amber-800 dark:text-amber-400">
+                You are currently viewing the public/guest dashboard. Features like AI Prompt generation, API key sync, and application settings require an authenticated account.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAuthRequiredModal(false)}
+              >
+                Cancel
+              </Button>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition"
+              >
+                Sign In Now
+              </Link>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Mobile Drawer / Sidebar */}
@@ -905,16 +968,30 @@ export default function DashboardClient({
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
               <div className="space-y-1.5">
                 <div className="text-[11px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase px-2 mb-1">
-                  Menu Utama
+                  Main Menu
                 </div>
-                <Link
-                  href="/settings"
-                  onClick={() => setIsMobileSidebarOpen(false)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <Settings className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>Settings</span>
-                </Link>
+                {isGuest ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileSidebarOpen(false)
+                      handleRequireAuth('Settings')
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <span>Settings</span>
+                  </button>
+                ) : (
+                  <Link
+                    href="/settings"
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <span>Settings</span>
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -1003,7 +1080,7 @@ export default function DashboardClient({
                     type="button"
                     onClick={() => {
                       setIsMobileSidebarOpen(false)
-                      setShowCopyAgentModal(true)
+                      handleOpenCopyPrompt()
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-xl"
                   >

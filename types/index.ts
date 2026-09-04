@@ -13,6 +13,7 @@ export interface FailedAttempt {
 
 export interface Project {
   id: string;
+  user_id?: string | null;
   name: string;
   slug: string;
   description?: string | null;
@@ -67,6 +68,7 @@ export interface BugItem {
 
 export interface ApiKey {
   id: string;
+  user_id?: string | null;
   name: string;
   key_prefix: string;
   raw_key?: string | null;
