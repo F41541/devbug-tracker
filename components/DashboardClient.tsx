@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import {
   Bug,
@@ -35,7 +35,7 @@ import { BugItem, BugStatus, BugSeverity, Project, ApiKey } from '@/types'
 interface DashboardProps {
   initialBugs: BugItem[]
   initialProjects: Project[]
-  initialSelectedProjectId?: number | null
+  initialSelectedProjectId?: string | null
   userEmail?: string
   isGuest?: boolean
   fixedWorkspace?: boolean
@@ -55,7 +55,7 @@ export default function DashboardClient({
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [apiKeys, setApiKeys] = useState<ApiKey[]>(initialApiKeys)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedProject, setSelectedProject] = useState<number | null>(
+  const [selectedProject, setSelectedProject] = useState<string | null>(
     initialSelectedProjectId || null
   )
   const [selectedSeverity, setSelectedSeverity] = useState<string>('')
@@ -71,8 +71,7 @@ export default function DashboardClient({
   useEffect(() => {
     if (isGuest && typeof window !== 'undefined') {
       const defaultProject: Project = {
-        id: 999999,
-        uuid: 'local-scratchpad',
+        id: 'local-scratchpad',
         name: 'Local Scratchpad',
         slug: 'local-scratchpad',
         description: 'Offline local-first bug notes stored only in this browser.',
@@ -134,11 +133,8 @@ export default function DashboardClient({
       const params = new URLSearchParams(window.location.search)
       const projectParam = params.get('project')
       if (projectParam) {
-        const pId = Number(projectParam)
-        if (!isNaN(pId)) {
-          setSelectedProject(pId)
-          setViewLevel('workspace')
-        }
+        setSelectedProject(projectParam)
+        setViewLevel('workspace')
       }
     }
   }, [])
@@ -245,10 +241,72 @@ export default function DashboardClient({
       )
       .subscribe()
 
+    // Resilient background sync polling (every 3s) for active workspaces
+    const pollInterval = setInterval(async () => {
+      try {
+        const query = supabase
+          .from('bug_items')
+          .select('*, project:projects(*), attachments(*)')
+          .order('order', { ascending: true })
+          .order('created_at', { ascending: false })
+
+        if (fixedWorkspace && selectedProject) {
+          query.eq('project_id', selectedProject)
+        }
+
+        const { data: latestBugs } = await query
+        if (latestBugs && Array.isArray(latestBugs)) {
+          setBugs((prev) => {
+            // Quick check if there is any difference in length or status/updated_at
+            let hasChanged = prev.length !== latestBugs.length
+            if (!hasChanged) {
+              const prevMap = new Map(prev.map((b) => [b.id, `${b.status}-${b.investigation_state}-${b.updated_at}`]))
+              for (const nb of latestBugs) {
+                if (prevMap.get(nb.id) !== `${nb.status}-${nb.investigation_state}-${nb.updated_at}`) {
+                  hasChanged = true
+                  break
+                }
+              }
+            }
+            return hasChanged ? latestBugs : prev
+          })
+        }
+      } catch (err) {
+        // silent fail on network glitch
+      }
+    }, 3000)
+
     return () => {
+      clearInterval(pollInterval)
       supabase.removeChannel(channel)
     }
-  }, [selectedBug?.id])
+  }, [selectedBug?.id, selectedProject, fixedWorkspace, isGuest])
+
+  // Map each bug to a project-scoped sequential bug number (1, 2, 3...) based on ascending creation / id
+  const projectNumberMap = useMemo(() => {
+    const map = new Map<string, number>()
+    const byProject: Record<string, BugItem[]> = {}
+
+    for (const b of bugs) {
+      const pid = b.project_id || 'unassigned'
+      if (!byProject[pid]) byProject[pid] = []
+      byProject[pid].push(b)
+    }
+
+    for (const pid in byProject) {
+      // Sort ascending by created_at (or id) to assign stable, permanent 1..N order
+      const list = [...byProject[pid]].sort((a, b) => {
+        if (a.created_at && b.created_at && a.created_at !== b.created_at) {
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        }
+        return a.id.localeCompare(b.id)
+      })
+      list.forEach((b, index) => {
+        map.set(b.id, index + 1)
+      })
+    }
+    return map
+  }, [bugs])
 
   // Filtered bugs
   const filteredBugs = bugs.filter((bug) => {
@@ -301,7 +359,7 @@ export default function DashboardClient({
     closed: 'Closed',
   }
 
-  async function handleStatusChange(bugId: number, newStatus: BugStatus) {
+  async function handleStatusChange(bugId: string, newStatus: BugStatus) {
     if (isGuest) {
       setBugs((prev) =>
         prev.map((b) =>
@@ -398,10 +456,14 @@ export default function DashboardClient({
         userEmail={userEmail}
         viewLevel={viewLevel}
         selectedProject={selectedProject}
-        onSelectProject={(id) => {
-          setSelectedProject(id)
-          setViewLevel(id === null ? 'projects_hub' : 'workspace')
-        }}
+        onSelectProject={
+          fixedWorkspace
+            ? undefined
+            : (id) => {
+                setSelectedProject(id)
+                setViewLevel(id === null ? 'projects_hub' : 'workspace')
+              }
+        }
         onNewBug={() => {
           setEditingBug(null)
           setShowBugModal(true)
@@ -683,6 +745,7 @@ export default function DashboardClient({
               {viewMode === 'kanban' ? (
                 <KanbanView
                   bugs={filteredBugs}
+                  projectNumberMap={projectNumberMap}
                   onView={(bug) => {
                     setSelectedBug(bug)
                     setShowDetailModal(true)
@@ -693,6 +756,7 @@ export default function DashboardClient({
               ) : (
                 <ListView
                   bugs={filteredBugs}
+                  projectNumberMap={projectNumberMap}
                   onView={(bug) => {
                     setSelectedBug(bug)
                     setShowDetailModal(true)
@@ -745,6 +809,7 @@ export default function DashboardClient({
         <BugDetailModal
           show={showDetailModal}
           bug={selectedBug}
+          displayNumber={projectNumberMap.get(selectedBug.id)}
           onClose={() => setShowDetailModal(false)}
           onEdit={(bug) => {
             setShowDetailModal(false)
@@ -800,7 +865,9 @@ export default function DashboardClient({
           onClose={() => setShowCopyAgentModal(false)}
           bugs={filteredBugs}
           project={projects.find((p) => p.id === selectedProject) || null}
+          projectNumberMap={projectNumberMap}
           apiKeys={apiKeys}
+          onKeyCreated={(newKey) => setApiKeys((prev) => [newKey, ...prev])}
           notify={showToast}
         />
       )}
@@ -841,12 +908,12 @@ export default function DashboardClient({
                   Menu Utama
                 </div>
                 <Link
-                  href="/integrations"
+                  href="/settings"
                   onClick={() => setIsMobileSidebarOpen(false)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                 >
-                  <Bot className="w-4 h-4 text-amber-500" />
-                  <span>API Keys & Integration</span>
+                  <Settings className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                  <span>Settings</span>
                 </Link>
                 <button
                   type="button"
@@ -862,16 +929,6 @@ export default function DashboardClient({
                     {projects.length}
                   </span>
                 </button>
-                {!isGuest && (
-                  <Link
-                    href="/account"
-                    onClick={() => setIsMobileSidebarOpen(false)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-                  >
-                    <Settings className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                    <span>Account Settings</span>
-                  </Link>
-                )}
               </div>
 
               <div className="space-y-2">

@@ -22,7 +22,7 @@ async function requireAuth() {
 // BUG ACTIONS
 export async function getBugs(filters?: {
   search?: string
-  project_id?: number | null
+  project_id?: string | null
   status?: string
   severity?: string
 }) {
@@ -61,7 +61,7 @@ export async function getBugs(filters?: {
 
 export async function createBug(rawFormData: {
   title: string
-  project_id: number
+  project_id: string
   description?: string | null
   environment?: string | null
   severity: BugSeverity
@@ -139,10 +139,10 @@ export async function createBug(rawFormData: {
 }
 
 export async function updateBug(
-  id: number,
+  id: string,
   rawFormData: {
     title: string
-    project_id: number
+    project_id: string
     description?: string | null
     environment?: string | null
     severity: BugSeverity
@@ -227,7 +227,7 @@ export async function updateBug(
   return bug
 }
 
-export async function updateBugStatus(id: number, status: BugStatus) {
+export async function updateBugStatus(id: string, status: BugStatus) {
   const { supabase } = await requireAuth()
   const payload: Record<string, any> = {
     status,
@@ -251,7 +251,7 @@ export async function updateBugStatus(id: number, status: BugStatus) {
   revalidatePath('/')
 }
 
-export async function deleteBug(id: number) {
+export async function deleteBug(id: string) {
   const { supabase } = await requireAuth()
   const { error } = await supabase.from('bug_items').delete().eq('id', id)
   if (error) {
@@ -323,7 +323,7 @@ export async function createProject(rawFormData: {
   return data
 }
 
-export async function updateProject(id: number, rawFormData: {
+export async function updateProject(id: string, rawFormData: {
   name: string
   color?: string
   description?: string | null
@@ -366,12 +366,12 @@ export async function updateProject(id: number, rawFormData: {
   return data
 }
 
-export async function getProjectByUuid(uuid: string) {
+export async function getProjectByUuid(idOrUuid: string) {
   const { supabase } = await requireAuth()
   const { data, error } = await supabase
     .from('projects')
     .select('*')
-    .eq('uuid', uuid)
+    .eq('id', idOrUuid)
     .single()
 
   if (error || !data) {
@@ -380,7 +380,7 @@ export async function getProjectByUuid(uuid: string) {
   return data as Project
 }
 
-export async function deleteProject(id: number) {
+export async function deleteProject(id: string) {
   const { supabase } = await requireAuth()
   const { error } = await supabase.from('projects').delete().eq('id', id)
   if (error) {

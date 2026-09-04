@@ -7,15 +7,17 @@ import { SeverityBadge } from '@/components/ui/Badge'
 
 interface ListViewProps {
   bugs: BugItem[]
+  projectNumberMap?: Map<string, number>
   onView: (bug: BugItem) => void
   onEdit: (bug: BugItem) => void
   onDelete: (bug: BugItem) => void
-  onStatusChange: (id: number, status: BugStatus) => void
+  onStatusChange: (id: string, status: BugStatus) => void
   onCopyAI: (bug: BugItem) => void
 }
 
 export function ListView({
   bugs,
+  projectNumberMap,
   onView,
   onEdit,
   onDelete,
@@ -45,15 +47,17 @@ export function ListView({
                 </td>
               </tr>
             ) : (
-              bugs.map((bug) => (
-                <tr
-                  key={bug.id}
-                  onClick={() => onView(bug)}
-                  className="hover:bg-slate-50/80 dark:hover:bg-zinc-850/60 transition-colors cursor-pointer"
-                >
-                  <td className="py-3 px-4 font-mono text-center text-slate-400 dark:text-zinc-500 font-semibold">
-                    #{bug.id}
-                  </td>
+              bugs.map((bug) => {
+                const bugDisplayId = projectNumberMap?.get(bug.id) ?? bug.id
+                return (
+                  <tr
+                    key={bug.id}
+                    onClick={() => onView(bug)}
+                    className="hover:bg-slate-50/80 dark:hover:bg-zinc-850/60 transition-colors cursor-pointer"
+                  >
+                    <td className="py-3 px-4 font-mono text-center text-slate-400 dark:text-zinc-500 font-semibold">
+                      #{bugDisplayId}
+                    </td>
                   <td className="py-3 px-4 font-medium text-slate-900 dark:text-zinc-100 max-w-md">
                     <div className="line-clamp-1">{bug.title}</div>
                     {bug.description && (
@@ -128,8 +132,9 @@ export function ListView({
                     </div>
                   </td>
                 </tr>
-              ))
-            )}
+              )
+            })
+          )}
           </tbody>
         </table>
       </div>

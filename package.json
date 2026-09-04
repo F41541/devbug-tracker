@@ -2,6 +2,9 @@
   "name": "devbug-tracker",
   "version": "1.0.0",
   "private": true,
+  "bin": {
+    "devbug": "./bin/devbug.mjs"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

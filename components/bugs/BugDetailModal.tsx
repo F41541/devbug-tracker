@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 interface BugDetailModalProps {
   show: boolean
   bug: BugItem
+  displayNumber?: number
   onClose: () => void
   onEdit: (bug: BugItem) => void
   onDelete: (bug: BugItem) => void
@@ -21,11 +22,14 @@ interface BugDetailModalProps {
 export function BugDetailModal({
   show,
   bug,
+  displayNumber,
   onClose,
   onEdit,
   onDelete,
   onCopyAI,
 }: BugDetailModalProps) {
+  const bugDisplayId = displayNumber !== undefined ? displayNumber : bug.id
+
   const headerActions = (
     <div className="flex items-center gap-1.5">
       <Button
@@ -62,7 +66,7 @@ export function BugDetailModal({
 
   const modalTitle = (
     <div className="flex items-center gap-2">
-      <span className="font-mono text-xs font-bold text-slate-400">#{bug.id}</span>
+      <span className="font-mono text-xs font-bold text-slate-400">#{bugDisplayId}</span>
       <SeverityBadge severity={bug.severity} />
       <StatusBadge status={bug.status} />
     </div>

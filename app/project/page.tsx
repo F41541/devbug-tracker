@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProjects, getBugs } from '@/app/actions'
-import { getApiKeys } from '@/app/integrations/actions'
+import { getApiKeys } from '@/app/settings/actions'
 import { ProjectsPageClient } from '@/components/projects/ProjectsPageClient'
 import { redirect } from 'next/navigation'
 

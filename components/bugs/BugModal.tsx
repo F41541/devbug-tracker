@@ -14,7 +14,7 @@ interface BugModalProps {
   show: boolean
   bug: BugItem | null
   projects: Project[]
-  selectedProjectId?: number | null
+  selectedProjectId?: string | null
   isGuest?: boolean
   onClose: () => void
   onSuccess: (bug: BugItem) => void
@@ -32,8 +32,8 @@ export function BugModal({
   notify,
 }: BugModalProps) {
   const [title, setTitle] = useState(bug?.title || '')
-  const [projectId, setProjectId] = useState<number | null>(
-    bug?.project_id || selectedProjectId || (projects[0]?.id || null)
+  const [projectId, setProjectId] = useState<string | null>(
+    bug?.project_id || selectedProjectId || null
   )
   const [location, setLocation] = useState(bug?.environment || '')
   const [errorDescription, setErrorDescription] = useState(bug?.description || '')
@@ -58,7 +58,7 @@ export function BugModal({
         setDetectedFiles(bug.suspected_files || [])
       } else {
         setTitle('')
-        setProjectId(selectedProjectId || (projects[0]?.id || null))
+        setProjectId(selectedProjectId || null)
         setLocation('')
         setErrorDescription('')
         setExpectedBehavior('')
@@ -128,7 +128,7 @@ export function BugModal({
           onSuccess(updated)
         } else {
           const created: BugItem = {
-            id: Date.now(),
+            id: String(Date.now()),
             project_id: projectId,
             title: title.trim(),
             description: errorDescription.trim() || null,
@@ -232,9 +232,12 @@ export function BugModal({
               <select
                 required
                 value={projectId || ''}
-                onChange={(e) => setProjectId(e.target.value ? Number(e.target.value) : null)}
+                onChange={(e) => setProjectId(e.target.value ? e.target.value : null)}
                 className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
               >
+                <option value="" disabled>
+                  Select project...
+                </option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}

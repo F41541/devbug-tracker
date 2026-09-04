@@ -20,8 +20,8 @@ interface AppSidebarProps {
   bugs?: BugItem[]
   userEmail?: string
   viewLevel?: 'projects_hub' | 'workspace'
-  selectedProject?: number | null
-  onSelectProject?: (id: number | null) => void
+  selectedProject?: string | null
+  onSelectProject?: (id: string | null) => void
   onNewBug?: () => void
   onManageProjects?: () => void
 }
@@ -91,7 +91,7 @@ export function AppSidebar({
           </button>
         ) : (
           <Link
-            href="/"
+            href={isGuest ? '/' : '/project'}
             className="w-full py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -155,7 +155,7 @@ export function AppSidebar({
           {projects.map((proj) => {
             const active =
               (isRoot && selectedProject === proj.id) ||
-              (!isRoot && pathname === `/project/${proj.uuid}`)
+              (!isRoot && pathname === `/project/${proj.id}`)
             const projBugsCount = bugs.filter(
               (b) => b.project_id === proj.id && b.status !== 'resolved' && b.status !== 'closed'
             ).length
@@ -179,20 +179,16 @@ export function AppSidebar({
                     />
                     <span className="truncate">{proj.name}</span>
                   </div>
-                  {projBugsCount > 0 && (
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400">
-                      {projBugsCount}
-                    </span>
-                  )}
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400">
+                    {projBugsCount}
+                  </span>
                 </button>
               )
             }
 
             const href = isGuest
               ? `/?project=${proj.id}`
-              : proj.uuid
-              ? `/project/${proj.uuid}`
-              : `/?project=${proj.id}`
+              : `/project/${proj.id}`
 
             return (
               <Link
@@ -208,11 +204,9 @@ export function AppSidebar({
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: proj.color || '#6366f1' }} />
                   <span className="truncate">{proj.name}</span>
                 </div>
-                {projBugsCount > 0 && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400">
-                    {projBugsCount}
-                  </span>
-                )}
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400">
+                  {projBugsCount}
+                </span>
               </Link>
             )
           })}
@@ -224,31 +218,16 @@ export function AppSidebar({
             Tools & Config
           </div>
           <Link
-            href="/integrations"
+            href="/settings"
             className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
-              pathname === '/integrations'
+              pathname === '/settings'
                 ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
                 : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
             }`}
           >
-            <Bot className="w-4 h-4 text-amber-500" />
-            <span>API Keys & Integration</span>
+            <Settings className="w-4 h-4 text-slate-500" />
+            <span>Settings</span>
           </Link>
-
-          {/* Account Settings only for Logged-In Admin */}
-          {!isGuest && (
-            <Link
-              href="/account"
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition ${
-                pathname === '/account'
-                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
-                  : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800'
-              }`}
-            >
-              <Settings className="w-4 h-4 text-slate-500" />
-              <span>Account Settings</span>
-            </Link>
-          )}
         </div>
       </div>
 

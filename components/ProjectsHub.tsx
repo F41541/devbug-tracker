@@ -17,7 +17,7 @@ interface ProjectsHubProps {
   projects: Project[]
   bugs: BugItem[]
   isGuest?: boolean
-  onSelectProject: (projectId: number | null) => void
+  onSelectProject: (projectId: string | null) => void
   onOpenNewProjectModal: () => void
   onEditProject?: (project: Project) => void
 }
@@ -37,7 +37,7 @@ export function ProjectsHub({
   const resolvedBugs = bugs.filter((b) => b.status === 'resolved' || b.status === 'closed').length
 
   // Helper to compute stats for a specific project
-  function getProjectStats(projectId: number | null) {
+  function getProjectStats(projectId: string | null) {
     const projectBugs =
       projectId === null
         ? bugs.filter((b) => b.project_id === null)
@@ -129,15 +129,15 @@ export function ProjectsHub({
         ) : (
           <div
             onClick={onOpenNewProjectModal}
-            className="border border-dashed border-amber-300/80 dark:border-amber-900/50 bg-amber-50/30 dark:bg-amber-950/20 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition min-h-[160px] group"
+            className="border border-dashed border-slate-300 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/30 rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition min-h-[160px] group"
           >
-            <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-900 text-amber-500 group-hover:text-amber-600 transition mb-2 shadow-2xs">
+            <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 group-hover:text-indigo-600 transition mb-2 shadow-2xs">
               <Plus className="w-5 h-5" />
             </div>
-            <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
+            <span className="text-xs font-bold text-slate-700 dark:text-zinc-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
               Add New Project
             </span>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-400 max-w-[220px] mt-0.5">
+            <p className="text-[11px] text-slate-400 dark:text-zinc-500 max-w-[200px] mt-0.5">
               Guest mode is limited to 1 local project. Sign in as admin for multi-project workspaces.
             </p>
           </div>

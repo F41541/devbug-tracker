@@ -50,8 +50,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               enum: ['open', 'in_progress', 'resolved', 'closed', 'all'],
             },
             project_id: {
-              type: 'number',
-              description: 'Optional numeric project ID filter.',
+              type: 'string',
+              description: 'Optional project UUID filter.',
             },
             workspace_id: {
               type: 'string',
@@ -67,8 +67,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: 'object',
           properties: {
             bug_id: {
-              type: 'number',
-              description: 'ID of the bug item.',
+              type: 'string',
+              description: 'UUID of the bug item.',
             },
           },
           required: ['bug_id'],
@@ -81,8 +81,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           type: 'object',
           properties: {
             bug_id: {
-              type: 'number',
-              description: 'ID of the bug to update.',
+              type: 'string',
+              description: 'UUID of the bug to update.',
             },
             status: {
               type: 'string',

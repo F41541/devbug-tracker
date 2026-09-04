@@ -34,7 +34,7 @@ export const attachmentInputSchema = z.object({
 
 export const bugInputSchema = z.object({
   title: z.string().trim().min(1, 'Title is required.'),
-  project_id: z.number().int().positive('Project is required.'),
+  project_id: z.string().min(1, 'Project is required.'),
   description: z.string().trim().nullable().optional(),
   environment: z.string().trim().nullable().optional(),
   status: bugStatusSchema.default('open'),

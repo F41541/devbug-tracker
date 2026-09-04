@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Project, BugItem } from '@/types'
 import { ProjectsHub } from '@/components/ProjectsHub'
 import { AppSidebar } from '@/components/AppSidebar'
 import { ProjectManagerModal } from '@/components/projects'
+import { BugModal } from '@/components/bugs/BugModal'
 import { ApiKeyPromptModal } from '@/components/integrations/ApiKeyPromptModal'
 import { Toast, ToastData, ToastType } from '@/components/ui/Toast'
 
@@ -27,6 +28,7 @@ export function ProjectsPageClient({
   const [bugs, setBugs] = useState<BugItem[]>(initialBugs)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [showProjectModal, setShowProjectModal] = useState(false)
+  const [showBugModal, setShowBugModal] = useState(false)
   const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(!hasApiKeys)
   const [toast, setToast] = useState<ToastData | null>(null)
 
@@ -34,6 +36,17 @@ export function ProjectsPageClient({
     setToast({ message, type })
     setTimeout(() => setToast(null), 3000)
   }
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'B' || e.key === 'b')) {
+        e.preventDefault()
+        setShowBugModal((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100 flex selection:bg-indigo-500 selection:text-white transition-colors">
@@ -44,6 +57,7 @@ export function ProjectsPageClient({
         bugs={bugs}
         userEmail={userEmail}
         viewLevel="projects_hub"
+        onNewBug={() => setShowBugModal(true)}
         onManageProjects={() => {
           setEditingProject(null)
           setShowProjectModal(true)
@@ -64,10 +78,7 @@ export function ProjectsPageClient({
             bugs={bugs}
             onSelectProject={(projId) => {
               if (projId === null) return
-              const targetProj = projects.find((p) => p.id === projId)
-              if (targetProj?.uuid) {
-                router.push(`/project/${targetProj.uuid}`)
-              }
+              router.push(`/project/${projId}`)
             }}
             onOpenNewProjectModal={() => {
               setEditingProject(null)
@@ -105,6 +116,21 @@ export function ProjectsPageClient({
           onClose={() => setShowApiKeyPrompt(false)}
           onKeyCreated={() => {
             setShowApiKeyPrompt(false)
+          }}
+          notify={showToast}
+        />
+      )}
+
+      {showBugModal && (
+        <BugModal
+          show={showBugModal}
+          bug={null}
+          projects={projects}
+          onClose={() => setShowBugModal(false)}
+          onSuccess={(newBug) => {
+            setShowBugModal(false)
+            setBugs((prev) => [newBug, ...prev])
+            showToast('Bug recorded!', 'success')
           }}
           notify={showToast}
         />

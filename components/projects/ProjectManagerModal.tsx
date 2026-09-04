@@ -71,10 +71,9 @@ export function ProjectManagerModal({
           onClose()
           notify(`Project "${updated.name}" updated locally`, 'success')
         } else {
-          const newId = Date.now()
+          const newId = `guest-${Date.now()}`
           const created: Project = {
             id: newId,
-            uuid: `guest-${newId}`,
             name: name.trim(),
             slug: name.trim().toLowerCase().replace(/\s+/g, '-'),
             color,
@@ -122,7 +121,7 @@ export function ProjectManagerModal({
     }
   }
 
-  async function handleDeleteProject(id: number) {
+  async function handleDeleteProject(id: string) {
     if (!window.confirm('Are you sure you want to delete this project?')) {
       return
     }
@@ -168,16 +167,16 @@ export function ProjectManagerModal({
           </div>
 
           {project && (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
-                Workspace UUID
+                Workspace ID (UUID)
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex gap-2">
                 <input
                   type="text"
                   disabled
                   readOnly
-                  value={project.uuid || 'N/A'}
+                  value={project.id}
                   className="flex-1 px-3 py-2 text-xs font-mono bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl text-slate-500 dark:text-zinc-400 cursor-not-allowed select-all"
                 />
                 <Button
@@ -185,12 +184,9 @@ export function ProjectManagerModal({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    if (project.uuid) {
-                      navigator.clipboard.writeText(project.uuid)
-                      notify('Workspace UUID copied!', 'success')
-                    }
+                    navigator.clipboard.writeText(project.id)
+                    notify('Workspace UUID copied!', 'success')
                   }}
-                  disabled={!project.uuid}
                   icon={<Copy className="w-3.5 h-3.5" />}
                   className="px-3"
                 >

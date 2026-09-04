@@ -5,7 +5,7 @@ import { Key, Copy, Check, Terminal, Bot, ArrowRight, ExternalLink } from 'lucid
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { createApiKey } from '@/app/integrations/actions'
+import { createApiKey } from '@/app/settings/actions'
 import { ApiKey } from '@/types'
 import Link from 'next/link'
 
@@ -133,7 +133,7 @@ export function ApiKeyPromptModal({
 
             <div className="flex items-center justify-between pt-2">
               <Link
-                href="/integrations"
+                href="/settings"
                 onClick={onClose}
                 className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold"
               >

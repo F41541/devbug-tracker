@@ -6,18 +6,20 @@ import { BugCard } from './BugCard'
 
 interface KanbanViewProps {
   bugs: BugItem[]
+  projectNumberMap?: Map<string, number>
   onView: (bug: BugItem) => void
-  onStatusChange: (id: number, status: BugStatus) => void
+  onStatusChange: (id: string, status: BugStatus) => void
   onCopyAI: (bug: BugItem) => void
 }
 
 export function KanbanView({
   bugs,
+  projectNumberMap,
   onView,
   onStatusChange,
   onCopyAI,
 }: KanbanViewProps) {
-  const [draggedBugId, setDraggedBugId] = useState<number | null>(null)
+  const [draggedBugId, setDraggedBugId] = useState<string | null>(null)
   const [activeDropCol, setActiveDropCol] = useState<BugStatus | null>(null)
 
   const columns: { key: BugStatus; label: string }[] = [
@@ -47,7 +49,7 @@ export function KanbanView({
     e.preventDefault()
     setActiveDropCol(null)
     const bugIdStr = e.dataTransfer.getData('text/plain')
-    const bugId = bugIdStr ? parseInt(bugIdStr, 10) : draggedBugId
+    const bugId = bugIdStr || draggedBugId
     setDraggedBugId(null)
 
     if (!bugId) return
@@ -101,6 +103,7 @@ export function KanbanView({
                   <BugCard
                     key={bug.id}
                     bug={bug}
+                    displayNumber={projectNumberMap?.get(bug.id)}
                     isDragging={draggedBugId === bug.id}
                     onDragStart={(id) => setDraggedBugId(id)}
                     onDragEnd={() => {

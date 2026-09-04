@@ -1,13 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import IntegrationsClient from '@/components/IntegrationsClient'
-import { getApiKeys } from '@/app/integrations/actions'
+import SettingsClient from '@/components/SettingsClient'
+import { getApiKeys } from '@/app/settings/actions'
 import { getProjects, getBugs } from '@/app/actions'
 import { Project, BugItem } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
-export default async function IntegrationsPage() {
+export default async function SettingsPage() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -28,14 +27,16 @@ export default async function IntegrationsPage() {
       projects = projectsData
       bugs = bugsData
     } catch (e) {
-      console.error('Failed to load data for integrations page:', e)
+      console.error('Failed to load data for settings page:', e)
     }
   }
 
   return (
-    <IntegrationsClient
-      initialApiKeys={apiKeys}
+    <SettingsClient
+      userId={user?.id}
       userEmail={user?.email || ''}
+      createdAt={user?.created_at}
+      initialApiKeys={apiKeys}
       projects={projects}
       bugs={bugs}
       isGuest={!user}

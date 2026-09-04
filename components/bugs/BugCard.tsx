@@ -7,16 +7,18 @@ import { SeverityBadge } from '@/components/ui/Badge'
 
 interface BugCardProps {
   bug: BugItem
+  displayNumber?: number
   isDragging?: boolean
-  onDragStart?: (id: number) => void
+  onDragStart?: (id: string) => void
   onDragEnd?: () => void
   onView: () => void
-  onStatusChange: (id: number, status: BugStatus) => void
+  onStatusChange: (id: string, status: BugStatus) => void
   onCopyAI: () => void
 }
 
 export function BugCard({
   bug,
+  displayNumber,
   isDragging,
   onDragStart,
   onDragEnd,
@@ -25,6 +27,7 @@ export function BugCard({
   onCopyAI,
 }: BugCardProps) {
   const isClosed = bug.status === 'closed'
+  const bugDisplayId = displayNumber !== undefined ? displayNumber : bug.id
 
   return (
     <div
@@ -48,7 +51,7 @@ export function BugCard({
       <div className="flex items-center justify-between gap-1.5">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="font-mono text-[11px] text-slate-400 dark:text-zinc-500 font-semibold">
-            #{bug.id}
+            #{bugDisplayId}
           </span>
           {bug.project && (
             <span className="text-[11px] font-medium text-slate-600 dark:text-zinc-400 truncate">

@@ -12,8 +12,7 @@ export interface FailedAttempt {
 }
 
 export interface Project {
-  id: number;
-  uuid?: string;
+  id: string;
   name: string;
   slug: string;
   description?: string | null;
@@ -27,8 +26,8 @@ export interface Project {
 }
 
 export interface Attachment {
-  id: number;
-  bug_item_id: number;
+  id: string;
+  bug_item_id: string;
   file_path: string;
   file_name: string;
   file_type: string;
@@ -37,8 +36,8 @@ export interface Attachment {
 }
 
 export interface BugItem {
-  id: number;
-  project_id: number;
+  id: string;
+  project_id: string;
   project?: Project | null;
   title: string;
   description?: string | null;
@@ -67,11 +66,10 @@ export interface BugItem {
 }
 
 export interface ApiKey {
-  id: number;
+  id: string;
   name: string;
   key_prefix: string;
+  raw_key?: string | null;
   created_at: string;
   last_used_at?: string | null;
 }
-
-

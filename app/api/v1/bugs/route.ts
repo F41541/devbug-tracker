@@ -3,12 +3,22 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import crypto from 'crypto'
 
 async function authenticateApiKey(req: NextRequest) {
+  const isLocalDev =
+    req.nextUrl.hostname === 'localhost' ||
+    req.nextUrl.hostname === '127.0.0.1' ||
+    req.nextUrl.hostname === '::1'
+
   const authHeader = req.headers.get('authorization')
   const xApiKey = req.headers.get('x-api-key')
   let rawKey = xApiKey
 
   if (!rawKey && authHeader?.startsWith('Bearer ')) {
     rawKey = authHeader.substring(7).trim()
+  }
+
+  // Local development bypass if no key provided
+  if (!rawKey && isLocalDev) {
+    return { id: 0, name: 'Local Dev Agent' }
   }
 
   if (!rawKey) return null
@@ -49,17 +59,17 @@ export async function GET(req: NextRequest) {
 
   let resolvedProjectId = projectId
 
-  // If workspace UUID provided, resolve project ID
+  // If workspace ID provided, resolve project ID
   if (workspaceId && !resolvedProjectId) {
     const { data: proj } = await supabase
       .from('projects')
       .select('id')
-      .eq('uuid', workspaceId)
+      .eq('id', workspaceId)
       .single()
     if (proj) {
       resolvedProjectId = String(proj.id)
     } else {
-      return NextResponse.json({ error: `Workspace with UUID ${workspaceId} not found.` }, { status: 404 })
+      return NextResponse.json({ error: `Workspace with ID ${workspaceId} not found.` }, { status: 404 })
     }
   }
 

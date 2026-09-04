@@ -3,6 +3,7 @@ import { BugItem, Project } from '@/types'
 export interface AIPromptOptions {
   baseUrl?: string
   apiKey?: string
+  projectNumberMap?: Map<string, number>
 }
 
 /**
@@ -23,11 +24,20 @@ export function generateAIPromptForBug(
     : '      <file>None explicitly identified</file>'
 
   const hostUrl = (options?.baseUrl || 'http://localhost:3000').replace(/\/$/, '')
-  const authHeader = options?.apiKey ? ` -H "x-api-key: ${options.apiKey}"` : ''
+  const endpointUrl = `${hostUrl}/api/v1/bugs`
+  const apiKeyStr = options?.apiKey || ''
+  const authHeader = apiKeyStr ? ` -H "Authorization: Bearer ${apiKeyStr}"` : ''
 
   let dossier = `<bug_investigation_dossier id="${bug.id}">\n`
 
-  // 1. Project Metadata
+  // 1. Agent Environment & Authentication
+  dossier += `  <agent_environment>\n`
+  dossier += `    <endpoint>${escapeXml(endpointUrl)}</endpoint>\n`
+  dossier += `    <project_id>${proj?.id || bug.project_id || ''}</project_id>\n`
+  dossier += `    <api_key>${escapeXml(apiKeyStr)}</api_key>\n`
+  dossier += `  </agent_environment>\n\n`
+
+  // 2. Project Metadata
   dossier += `  <project_metadata>\n`
   dossier += `    <name>${escapeXml(proj?.name || 'Project')}</name>\n`
   if (proj?.repository_url) dossier += `    <repo_url>${escapeXml(proj.repository_url)}</repo_url>\n`
@@ -80,16 +90,16 @@ export function generateAIPromptForBug(
 
   // 6. Realtime Lifecycle Synchronization Protocol (CLI Trigger)
   dossier += `  <agent_lifecycle_sync_protocol>\n`
-  dossier += `    CRITICAL: You MUST execute the following shell commands in background terminal to sync live progress with the DevBug Tracker dashboard:\n\n`
+  dossier += `    CRITICAL: You MUST execute the following CLI commands in background terminal to sync live progress with DevBug Tracker:\n\n`
   dossier += `    STEP 1 (ON START - before touching code):\n`
-  dossier += `    curl -s -X PATCH "${hostUrl}/api/v1/bugs" -H "Content-Type: application/json"${authHeader} -d '{"id": ${bug.id}, "status": "in_progress", "investigation_state": "fix_in_progress"}'\n\n`
+  dossier += `    npx devbug start ${bug.id}${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}\n\n`
   dossier += `    STEP 2 (ON SUCCESS - after fixing and verification passes):\n`
-  dossier += `    curl -s -X PATCH "${hostUrl}/api/v1/bugs" -H "Content-Type: application/json"${authHeader} -d '{"id": ${bug.id}, "status": "resolved", "investigation_state": "verified", "root_cause": "FIXED: [brief description of root cause and what you changed]"}'\n`
+  dossier += `    npx devbug resolve ${bug.id} "FIXED: [brief description of what you changed]"${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}\n`
   dossier += `  </agent_lifecycle_sync_protocol>\n\n`
 
   // 7. Agent Instructions
   dossier += `  <agent_instructions>\n`
-  dossier += `    1. Run STEP 1 curl command above to announce work in progress.\n`
+  dossier += `    1. Run STEP 1 command above (npx devbug start) to announce work in progress.\n`
   dossier += `    2. Start investigation strictly within <code_anchors> and <location_or_url>.\n`
   if (bug.failed_attempts && bug.failed_attempts.length > 0) {
     dossier += `    3. CRITICAL: Do NOT repeat approaches listed in <do_not_attempt_prior_failures>.\n`
@@ -102,7 +112,7 @@ export function generateAIPromptForBug(
   } else {
     dossier += `    ${bug.failed_attempts && bug.failed_attempts.length > 0 ? '5' : '4'}. Apply minimal surgical fix and verify there are no side effects.\n`
   }
-  dossier += `    ${bug.failed_attempts && bug.failed_attempts.length > 0 ? '6' : '5'}. Run STEP 2 curl command above to mark the issue resolved in the dashboard.\n`
+  dossier += `    ${bug.failed_attempts && bug.failed_attempts.length > 0 ? '6' : '5'}. Run STEP 2 command above (npx devbug resolve) to mark the issue resolved in the dashboard.\n`
   dossier += `  </agent_instructions>\n`
   dossier += `</bug_investigation_dossier>`
 
@@ -118,29 +128,74 @@ export function generateBulkAIPrompt(
   options?: AIPromptOptions
 ): string {
   const hostUrl = (options?.baseUrl || 'http://localhost:3000').replace(/\/$/, '')
-  const authHeader = options?.apiKey ? ` -H "x-api-key: ${options.apiKey}"` : ''
+  const endpointUrl = `${hostUrl}/api/v1/bugs`
+  const apiKeyStr = options?.apiKey || ''
+  const authHeader = apiKeyStr ? ` -H "Authorization: Bearer ${apiKeyStr}"` : ''
 
-  let prompt = `<batch_bug_investigation count="${bugs.length}">\n`
-  bugs.forEach((bug, index) => {
-    prompt += `  <bug index="${index + 1}" id="${bug.id}" severity="${bug.severity}" status="${bug.status}">\n`
+  // Filter: only 'open' bugs get actionable tasks with sync curl commands
+  const openBugs = bugs.filter((b) => b.status === 'open')
+  const inProgressBugs = bugs.filter((b) => b.status === 'in_progress')
+  const resolvedBugs = bugs.filter((b) => b.status === 'resolved' || b.status === 'closed')
+
+  const getDisplayId = (b: BugItem) => options?.projectNumberMap?.get(b.id) ?? b.id
+
+  let prompt = `<batch_bug_investigation active_count="${openBugs.length}">\n`
+
+  // 1. Agent Environment & Authentication
+  prompt += `  <agent_environment>\n`
+  prompt += `    <endpoint>${escapeXml(endpointUrl)}</endpoint>\n`
+  prompt += `    <project_id>${project?.id || bugs[0]?.project_id || ''}</project_id>\n`
+  prompt += `    <api_key>${escapeXml(apiKeyStr)}</api_key>\n`
+  prompt += `  </agent_environment>\n\n`
+
+  // Summary section for non-open issues to avoid prompt clutter
+  if (inProgressBugs.length > 0 || resolvedBugs.length > 0) {
+    prompt += `  <status_overview>\n`
+    if (inProgressBugs.length > 0) {
+      prompt += `    <in_progress ids="${inProgressBugs.map((b) => `#${getDisplayId(b)}`).join(', ')}">${inProgressBugs.map((b) => `#${getDisplayId(b)} "${escapeXml(b.title)}"`).join('; ')}</in_progress>\n`
+    }
+    if (resolvedBugs.length > 0) {
+      prompt += `    <resolved count="${resolvedBugs.length}" ids="${resolvedBugs.map((b) => `#${getDisplayId(b)}`).join(', ')}" />\n`
+    }
+    prompt += `  </status_overview>\n\n`
+  }
+
+  // Active open bugs only
+  openBugs.forEach((bug, index) => {
+    const displayId = getDisplayId(bug)
+    prompt += `  <bug index="${index + 1}" id="${bug.id}" display_id="#${displayId}" severity="${bug.severity}" status="${bug.status}">\n`
     prompt += `    <project>${escapeXml(bug.project?.name || project?.name || 'Project')}</project>\n`
     prompt += `    <title>${escapeXml(bug.title)}</title>\n`
+    if (bug.environment) prompt += `    <location>${escapeXml(bug.environment)}</location>\n`
+    if (bug.description) prompt += `    <description>${escapeXml(bug.description)}</description>\n`
+    if (bug.expected_result) prompt += `    <expected>${escapeXml(bug.expected_result)}</expected>\n`
     if (bug.fix_hint) prompt += `    <hint>${escapeXml(bug.fix_hint)}</hint>\n`
     if (bug.suspected_files && bug.suspected_files.length > 0) {
       prompt += `    <anchors>${escapeXml(bug.suspected_files.join(', '))}</anchors>\n`
     }
-    prompt += `    <sync_start>curl -s -X PATCH "${hostUrl}/api/v1/bugs" -H "Content-Type: application/json"${authHeader} -d '{"id": ${bug.id}, "status": "in_progress", "investigation_state": "fix_in_progress"}'</sync_start>\n`
-    prompt += `    <sync_done>curl -s -X PATCH "${hostUrl}/api/v1/bugs" -H "Content-Type: application/json"${authHeader} -d '{"id": ${bug.id}, "status": "resolved", "investigation_state": "verified", "root_cause": "FIXED: [summary]"}'</sync_done>\n`
+    prompt += `    <sync_start>npx devbug start ${bug.id}${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}</sync_start>\n`
+    prompt += `    <sync_done>npx devbug resolve ${bug.id} "FIXED: [summary]"${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}</sync_done>\n`
     prompt += `  </bug>\n`
   })
+
   prompt += `  <agent_execution_protocol>\n`
-  prompt += `    1. Triage and resolve bugs above in order of priority (critical -> high -> medium -> low).\n`
-  prompt += `    2. Before starting a bug, execute its <sync_start> curl command in the background.\n`
-  prompt += `    3. Inspect files, isolate root cause, and apply surgical fix.\n`
+  prompt += `    1. GROUPING & TRIAGE (CRITICAL):\n`
+  prompt += `       - Cluster issues sharing identical pages, URLs, components, or user flows before touching any file.\n`
+  prompt += `       - Sort each cluster by severity (critical -> high -> medium -> low).\n`
+  prompt += `       - Complete each cluster end-to-end to prevent context-switching and redundant edits across files.\n`
+  prompt += `    2. LIFECYCLE SYNC:\n`
+  prompt += `       - Run <sync_start> CLI command (npx devbug start ...) as soon as you pick an issue to work on.\n`
+  prompt += `    3. SURGICAL INVESTIGATION & FIX:\n`
+  prompt += `       - Follow anchors & locations, isolate root cause, make minimal surgical changes.\n`
   if (project?.test_command) {
-    prompt += `    4. Run '${escapeXml(project.test_command)}' to verify.\n`
+    prompt += `    4. VERIFICATION:\n`
+    prompt += `       - Run '${escapeXml(project.test_command)}' to verify.\n`
+    prompt += `    5. COMPLETION SYNC:\n`
+    prompt += `       - Run <sync_done> CLI command (npx devbug resolve ...) immediately upon verified fix with brief root cause explanation.\n`
+  } else {
+    prompt += `    4. COMPLETION SYNC:\n`
+    prompt += `       - Run <sync_done> CLI command (npx devbug resolve ...) immediately upon verified fix with brief root cause explanation.\n`
   }
-  prompt += `    5. Immediately upon verified fix, execute its <sync_done> curl command to notify the dashboard.\n`
   prompt += `  </agent_execution_protocol>\n`
   prompt += `</batch_bug_investigation>`
   return prompt

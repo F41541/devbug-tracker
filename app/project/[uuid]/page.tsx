@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getProjectByUuid, getProjects, getBugs } from '@/app/actions'
-import { getApiKeys } from '@/app/integrations/actions'
+import { getApiKeys } from '@/app/settings/actions'
 import DashboardClient from '@/components/DashboardClient'
 
 export const dynamic = 'force-dynamic'
