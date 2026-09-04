@@ -303,28 +303,44 @@ export async function createProject(rawFormData: {
     baseSlug = 'project'
   }
   
+  const payloadWithUser = {
+    user_id: user.id,
+    name: formData.name,
+    slug: `${baseSlug}-${Date.now().toString().slice(-4)}`,
+    color: formData.color || '#6366f1',
+    description: formData.description || null,
+    repository_url: formData.repository_url || null,
+    tech_stack: formData.tech_stack || [],
+    package_manager: formData.package_manager || 'npm',
+    test_command: formData.test_command || 'npm test',
+  }
+
   const { data, error } = await supabase
     .from('projects')
-    .insert({
-      user_id: user.id,
-      name: formData.name,
-      slug: `${baseSlug}-${Date.now().toString().slice(-4)}`,
-      color: formData.color || '#6366f1',
-      description: formData.description || null,
-      repository_url: formData.repository_url || null,
-      tech_stack: formData.tech_stack || [],
-      package_manager: formData.package_manager || 'npm',
-      test_command: formData.test_command || 'npm test',
-    })
+    .insert(payloadWithUser)
     .select()
     .single()
 
-  if (error) {
-    console.error('Database error in createProject:', error.message)
-    throw new Error('Failed to create project.')
+  if (!error && data) {
+    revalidatePath('/')
+    return data
   }
+
+  // Graceful fallback jika kolom user_id belum ada
+  const { user_id, ...payloadWithoutUser } = payloadWithUser
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from('projects')
+    .insert(payloadWithoutUser)
+    .select()
+    .single()
+
+  if (fallbackError) {
+    console.error('Database error in createProject:', fallbackError.message)
+    throw new Error('Failed to create project: ' + fallbackError.message)
+  }
+
   revalidatePath('/')
-  return data
+  return fallbackData
 }
 
 export async function updateProject(id: string, rawFormData: {
