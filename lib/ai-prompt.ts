@@ -32,9 +32,11 @@ export function generateAIPromptForBug(
 
   // 1. Agent Environment & Authentication
   dossier += `  <agent_environment>\n`
-  dossier += `    <endpoint>${escapeXml(endpointUrl)}</endpoint>\n`
+  dossier += `    <server_url>${escapeXml(hostUrl)}</server_url>\n`
   dossier += `    <project_id>${proj?.id || bug.project_id || ''}</project_id>\n`
   dossier += `    <api_key>${escapeXml(apiKeyStr)}</api_key>\n`
+  dossier += `    <health_check_url>${escapeXml(hostUrl)}/api/health</health_check_url>\n`
+  dossier += `    <note>Do not execute manual unauthenticated cURL requests against /api/v1/bugs. Use the pre-configured npx devbug CLI commands provided below.</note>\n`
   dossier += `  </agent_environment>\n\n`
 
   // 2. Project Metadata
@@ -143,9 +145,11 @@ export function generateBulkAIPrompt(
 
   // 1. Agent Environment & Authentication
   prompt += `  <agent_environment>\n`
-  prompt += `    <endpoint>${escapeXml(endpointUrl)}</endpoint>\n`
+  prompt += `    <server_url>${escapeXml(hostUrl)}</server_url>\n`
   prompt += `    <project_id>${project?.id || bugs[0]?.project_id || ''}</project_id>\n`
   prompt += `    <api_key>${escapeXml(apiKeyStr)}</api_key>\n`
+  prompt += `    <health_check_url>${escapeXml(hostUrl)}/api/health</health_check_url>\n`
+  prompt += `    <note>Do not execute manual unauthenticated cURL requests against /api/v1/bugs. Always use the pre-configured 'npx devbug' CLI commands in &lt;sync_start&gt; and &lt;sync_done&gt;.</note>\n`
   prompt += `  </agent_environment>\n\n`
 
   // Summary section for non-open issues to avoid prompt clutter
@@ -184,7 +188,7 @@ export function generateBulkAIPrompt(
   prompt += `       - Sort each cluster by severity (critical -> high -> medium -> low).\n`
   prompt += `       - Complete each cluster end-to-end to prevent context-switching and redundant edits across files.\n`
   prompt += `    2. LIFECYCLE SYNC:\n`
-  prompt += `       - Run <sync_start> CLI command (npx devbug start ...) as soon as you pick an issue to work on.\n`
+  prompt += `       - Run <sync_start> CLI command (npx devbug start ...) as soon as you pick an issue to work on. Do not perform manual unauthenticated cURL requests.\n`
   prompt += `    3. SURGICAL INVESTIGATION & FIX:\n`
   prompt += `       - Follow anchors & locations, isolate root cause, make minimal surgical changes.\n`
   if (project?.test_command) {
