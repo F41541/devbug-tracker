@@ -152,6 +152,33 @@ export function generateBulkAIPrompt(
   prompt += `    <note>Do not execute manual unauthenticated cURL requests against /api/v1/bugs. Always use the pre-configured 'npx devbug' CLI commands in &lt;sync_start&gt; and &lt;sync_done&gt;.</note>\n`
   prompt += `  </agent_environment>\n\n`
 
+  // 2. Execution Protocol & Triage Matrix (Directive-First: read before processing bug list)
+  prompt += `  <agent_execution_protocol>\n`
+  prompt += `    RULE 1 - MANDATORY TRIAGE PLAN (DO THIS FIRST BEFORE TOUCHING CODE):\n`
+  prompt += `       - In your very first response, you MUST output a structured cluster plan before editing any file.\n`
+  prompt += `       - Group issues by identical location, page, URL, or shared component first (Cluster 1, Cluster 2, etc.).\n`
+  prompt += `       - Within each cluster, sort bugs by severity: critical -> high -> medium -> low.\n`
+  prompt += `       - Work cluster-by-cluster end-to-end to avoid jumping back and forth across files.\n`
+  prompt += `    RULE 2 - STRICT SINGLE-ISSUE LIFECYCLE (NO BATCH CHAINING):\n`
+  prompt += `       - Complete each bug sequentially: START -> INVESTIGATE -> SURGICAL FIX -> VERIFY -> RESOLVE.\n`
+  prompt += `       - Run <sync_start> CLI command (npx devbug start ...) immediately when you begin working on a specific bug.\n`
+  prompt += `       - You MUST NOT combine CLI commands using chaining operators (&&, ;, ||).\n`
+  prompt += `       - Only ONE bug may be in "in_progress" status at any given time.\n`
+  prompt += `       - You MUST NOT begin or touch files for the next bug until the current bug is fully verified and marked resolved via <sync_done>.\n`
+  prompt += `       - Do not make unauthenticated manual cURL requests.\n`
+  prompt += `    RULE 3 - SURGICAL INVESTIGATION & FIX:\n`
+  prompt += `       - Follow anchors & locations, isolate root cause, make minimal surgical changes.\n`
+  if (project?.test_command) {
+    prompt += `    RULE 4 - VERIFICATION:\n`
+    prompt += `       - Run '${escapeXml(project.test_command)}' to verify.\n`
+    prompt += `    RULE 5 - COMPLETION SYNC:\n`
+    prompt += `       - Run <sync_done> CLI command (npx devbug resolve ...) immediately upon verified fix with brief root cause explanation.\n`
+  } else {
+    prompt += `    RULE 4 - COMPLETION SYNC:\n`
+    prompt += `       - Run <sync_done> CLI command (npx devbug resolve ...) immediately upon verified fix with brief root cause explanation.\n`
+  }
+  prompt += `  </agent_execution_protocol>\n\n`
+
   // Summary section for non-open issues to avoid prompt clutter
   if (inProgressBugs.length > 0 || resolvedBugs.length > 0) {
     prompt += `  <status_overview>\n`
@@ -164,7 +191,7 @@ export function generateBulkAIPrompt(
     prompt += `  </status_overview>\n\n`
   }
 
-  // Active open bugs only
+  // Active open bugs list
   openBugs.forEach((bug, index) => {
     const displayId = getDisplayId(bug)
     prompt += `  <bug index="${index + 1}" id="${bug.id}" display_id="#${displayId}" severity="${bug.severity}" status="${bug.status}">\n`
@@ -182,25 +209,6 @@ export function generateBulkAIPrompt(
     prompt += `  </bug>\n`
   })
 
-  prompt += `  <agent_execution_protocol>\n`
-  prompt += `    1. GROUPING & TRIAGE (CRITICAL):\n`
-  prompt += `       - Cluster issues sharing identical pages, URLs, components, or user flows before touching any file.\n`
-  prompt += `       - Sort each cluster by severity (critical -> high -> medium -> low).\n`
-  prompt += `       - Complete each cluster end-to-end to prevent context-switching and redundant edits across files.\n`
-  prompt += `    2. LIFECYCLE SYNC:\n`
-  prompt += `       - Run <sync_start> CLI command (npx devbug start ...) as soon as you pick an issue to work on. Do not perform manual unauthenticated cURL requests.\n`
-  prompt += `    3. SURGICAL INVESTIGATION & FIX:\n`
-  prompt += `       - Follow anchors & locations, isolate root cause, make minimal surgical changes.\n`
-  if (project?.test_command) {
-    prompt += `    4. VERIFICATION:\n`
-    prompt += `       - Run '${escapeXml(project.test_command)}' to verify.\n`
-    prompt += `    5. COMPLETION SYNC:\n`
-    prompt += `       - Run <sync_done> CLI command (npx devbug resolve ...) immediately upon verified fix with brief root cause explanation.\n`
-  } else {
-    prompt += `    4. COMPLETION SYNC:\n`
-    prompt += `       - Run <sync_done> CLI command (npx devbug resolve ...) immediately upon verified fix with brief root cause explanation.\n`
-  }
-  prompt += `  </agent_execution_protocol>\n`
   prompt += `</batch_bug_investigation>`
   return prompt
 }

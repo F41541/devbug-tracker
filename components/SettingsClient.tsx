@@ -120,6 +120,7 @@ export default function SettingsClient({
           id: String(Date.now()),
           name: keyName.trim(),
           key_prefix: `devbug-${h1.slice(0, 4)}...`,
+          raw_key: rawSecret,
           created_at: new Date().toISOString(),
           last_used_at: null,
         }
@@ -128,13 +129,37 @@ export default function SettingsClient({
         localStorage.setItem('devbug_guest_api_keys', JSON.stringify(updated))
         setCreatedSecret(rawSecret)
         setSessionSecrets((prev) => ({ ...prev, [newKey.id]: rawSecret }))
+        if (typeof window !== 'undefined') {
+          try {
+            const stored = localStorage.getItem('devbug_local_api_secrets')
+            const secretMap = stored ? JSON.parse(stored) : {}
+            secretMap[newKey.id] = rawSecret
+            localStorage.setItem('devbug_local_api_secrets', JSON.stringify(secretMap))
+          } catch {
+            // ignore
+          }
+        }
         setKeyName('')
         showToast('API Key generated successfully (Guest Mode)', 'success')
       } else {
         const res = await createApiKey(keyName)
-        setApiKeys((prev) => [res.apiKey, ...prev])
+        const keyWithSecret: ApiKey = {
+          ...res.apiKey,
+          raw_key: res.rawSecret,
+        }
+        setApiKeys((prev) => [keyWithSecret, ...prev])
         setCreatedSecret(res.rawSecret)
         setSessionSecrets((prev) => ({ ...prev, [res.apiKey.id]: res.rawSecret }))
+        if (typeof window !== 'undefined') {
+          try {
+            const stored = localStorage.getItem('devbug_local_api_secrets')
+            const secretMap = stored ? JSON.parse(stored) : {}
+            secretMap[res.apiKey.id] = res.rawSecret
+            localStorage.setItem('devbug_local_api_secrets', JSON.stringify(secretMap))
+          } catch {
+            // ignore
+          }
+        }
         setKeyName('')
         showToast('API Key generated successfully', 'success')
       }

@@ -45,6 +45,7 @@ export function ApiKeyPromptModal({
           id: String(Date.now()),
           name: name.trim(),
           key_prefix: `devbug-${h1.slice(0, 4)}...`,
+          raw_key: rawSecret,
           created_at: new Date().toISOString(),
           last_used_at: null,
         }
@@ -53,6 +54,10 @@ export function ApiKeyPromptModal({
             const stored = localStorage.getItem('devbug_guest_api_keys')
             const list = stored ? JSON.parse(stored) : []
             localStorage.setItem('devbug_guest_api_keys', JSON.stringify([newKey, ...list]))
+            const storedSecrets = localStorage.getItem('devbug_local_api_secrets')
+            const secretMap = storedSecrets ? JSON.parse(storedSecrets) : {}
+            secretMap[newKey.id] = rawSecret
+            localStorage.setItem('devbug_local_api_secrets', JSON.stringify(secretMap))
           } catch {
             // ignore
           }
@@ -62,8 +67,22 @@ export function ApiKeyPromptModal({
         notify('API Key created successfully!', 'success')
       } else {
         const res = await createApiKey(name.trim())
+        const keyWithSecret: ApiKey = {
+          ...res.apiKey,
+          raw_key: res.rawSecret,
+        }
+        if (typeof window !== 'undefined') {
+          try {
+            const storedSecrets = localStorage.getItem('devbug_local_api_secrets')
+            const secretMap = storedSecrets ? JSON.parse(storedSecrets) : {}
+            secretMap[res.apiKey.id] = res.rawSecret
+            localStorage.setItem('devbug_local_api_secrets', JSON.stringify(secretMap))
+          } catch {
+            // ignore
+          }
+        }
         setCreatedSecret(res.rawSecret)
-        onKeyCreated(res.apiKey)
+        onKeyCreated(keyWithSecret)
         notify('API Key created successfully!', 'success')
       }
     } catch (err: any) {

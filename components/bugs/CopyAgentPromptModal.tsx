@@ -47,10 +47,27 @@ export function CopyAgentPromptModal({
     setCurrentApiKeys(apiKeys)
   }, [apiKeys])
 
-  // Cari key aktif default dari session atau list prefix
+  // Cari key aktif default dari session secrets, persistent localStorage, atau raw_key
   useEffect(() => {
     if (currentApiKeys.length > 0) {
-      const activeSecret = currentApiKeys[0].raw_key || currentApiKeys[0].key_prefix
+      let storedSecret: string | null = null
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('devbug_local_api_secrets')
+          if (stored) {
+            const secretMap = JSON.parse(stored)
+            storedSecret = secretMap[currentApiKeys[0].id] || null
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      const activeSecret =
+        currentApiKeys[0].raw_key ||
+        storedSecret ||
+        (currentApiKeys[0].key_prefix.endsWith('...') ? '' : currentApiKeys[0].key_prefix)
+
       setSelectedKey(activeSecret)
     } else {
       setSelectedKey('')
@@ -80,11 +97,8 @@ export function CopyAgentPromptModal({
 
   function handleNewKeyCreated(newKey: ApiKey) {
     setCurrentApiKeys((prev) => [newKey, ...prev])
-    if (newKey.raw_key) {
-      setSelectedKey(newKey.raw_key)
-    } else {
-      setSelectedKey(newKey.key_prefix)
-    }
+    const fullSecret = newKey.raw_key || (newKey.key_prefix.endsWith('...') ? '' : newKey.key_prefix)
+    setSelectedKey(fullSecret)
     if (onKeyCreated) {
       onKeyCreated(newKey)
     }
