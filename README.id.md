@@ -20,13 +20,38 @@
 
 ### 🌐 Navigasi Cepat
 
-[📸 Preview](#-preview) • [✨ Fitur Utama](#-fitur-utama) • [🛠️ Tech Stack](#️-tech-stack) • [⚡ Panduan Cepat](#-panduan-instalasi-cepat) • [🤖 AI Agent & CLI](#-integrasi-ai-coding-agent--cli) • [📁 Struktur Direktori](#-struktur-direktori) • [🤝 Kontribusi](#-kontribusi--standar-kode)
+[💡 Latar Belakang](#-latar-belakang-mengapa-devbug-tracker-diciptakan) • [📸 Preview](#-preview) • [✨ Fitur Utama](#-fitur-utama) • [🛠️ Tech Stack](#️-tech-stack) • [⚡ Panduan Cepat](#-panduan-instalasi-cepat) • [🤖 AI Agent & CLI](#-integrasi-ai-coding-agent--cli) • [📁 Struktur Direktori](#-struktur-direktori) • [🤝 Kontribusi](#-kontribusi--standar-kode)
 
 ---
 
 </div>
 
 <br />
+
+## 💡 Latar Belakang: Mengapa DevBug Tracker Diciptakan?
+
+### 🌀 Dilema Klasik Vibe Coder & AI-Assisted Developer
+Bagi developer modern yang aktif membangun software bersama AI (Cursor, Claude Code, Windsurf, Aider), fase pengujian (*QA & user-flow testing*) sering kali menjadi jebakan produktivitas:
+1. **The Context Switching Trap:** Setiap kali menemukan 1 bug kecil di browser, Anda refleks membuka chat agen, mengetik penjelasan seadanya, dan menunggu perbaikan. Fokus pengujian Anda langsung terputus. Belum selesai menguji fitur B, Anda sudah terdistraksi memikirkan bug di fitur A.
+2. **Catatan Berceceran & Kurang Konteks:** Jika bug dicatat di Notepad, Notion, atau Slack, formatnya selalu berantakan. Screenshot harus disimpan ke file dulu, stack trace terpotong, dan lokasi file tidak spesifik.
+3. **Tool Konvensional Terlalu Berat:** Jira, Linear, atau GitHub Issues dibangun untuk tim enterprise dengan serangkaian kolom formulir yang lambat, birokratis, dan tidak ergonomis untuk solo vibe coder.
+
+### 🤖 Sudut Pandang AI Coding Agent: Mengapa Ini Juga Menyelamatkan Kami?
+> *"Sebagai agen AI, musuh terbesar kami adalah konteks yang ambigu. Prompt seperti 'tombol checkout error' memaksa agen menebak-nebak, menelusuri ratusan file tanpa arah, dan berisiko merusak kode yang sudah bekerja."*
+
+Dengan **DevBug Tracker**, agen menerima:
+- **Code Locality Anchors:** Jalur file dan nomor baris yang pasti (`app/api/...:58`), sehingga agen langsung menuju ke sumber masalah tanpa buang token.
+- **Error Telemetry Lengkap:** Stack trace verbatim dan langkah reproduksi jelas.
+- **Fail Attempt Memory:** Catatan percobaan sebelumnya yang gagal agar agen tidak mengulangi hipotesis yang salah.
+
+### ⚡ Alur Kerja Baru: Batch Testing Lalu Delegasi
+DevBug Tracker membalik proses yang melelahkan tersebut menjadi alur kerja yang tenang dan efisien:
+1. **Uji Tuntas Tanpa Distraksi:** Masuk ke mode fokus. Jelajahi aplikasi Anda dari awal sampai akhir.
+2. **Catat dalam Hitungan Detik:** Tekan shortcut `Ctrl+Shift+B`, ketik ringkasan, dan tempel screenshot langsung dari clipboard (`Ctrl+V`).
+3. **Satu Klik Delegasi ke AI:** Setelah sesi testing selesai dan seluruh bug terkumpul di board, klik **Copy AI Agent Prompt** atau gunakan CLI bawaan (`npx devbug-tracker`).
+4. **Duduk & Pantau:** Biarkan agen menyelesaikan daftar isu dengan konteks yang sempurna, sementara status tiket ter-update secara otomatis.
+
+---
 
 ## 📸 Preview
 

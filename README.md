@@ -20,13 +20,37 @@
 
 ### 🌐 Quick Navigation
 
-[📸 Preview](#-preview) • [✨ Key Features](#-key-features) • [🛠️ Tech Stack](#️-tech-stack) • [⚡ Quick Start](#-quick-start) • [🤖 AI Agent & CLI](#-ai-coding-agent-integration--cli) • [📁 Directory Structure](#-directory-structure) • [🤝 Contributing](#-contributing--code-standards)
+[💡 Motivation](#-why-devbug-tracker-the-motivation) • [📸 Preview](#-preview) • [✨ Key Features](#-key-features) • [🛠️ Tech Stack](#️-tech-stack) • [⚡ Quick Start](#-quick-start) • [🤖 AI Agent & CLI](#-ai-coding-agent-integration--cli) • [📁 Directory Structure](#-directory-structure) • [🤝 Contributing](#-contributing--code-standards)
 
 ---
 
 </div>
 
 <br />
+
+## 💡 Why DevBug Tracker? (The Motivation)
+
+### 🌀 The Vibe Coder's Dilemma
+Building software alongside autonomous AI coding agents (Cursor, Claude Code, Windsurf, Aider) is extraordinarily fast—until you hit the testing phase:
+1. **The Context Switching Trap:** The moment you spot a glitch, you tab into your AI chat, type a rushed prompt, and wait. Your testing flow is shattered. Before you finish testing feature B, you're already dragged down into debugging feature A.
+2. **Scattered, Context-Poor Notes:** If you dump bug reports into Notepad, Apple Notes, or Slack, the format is chaos. Screenshots require saving files to disk, stack traces are truncated, and file paths are lost.
+3. **Traditional Issue Trackers Are Too Heavy:** Jira, Linear, or GitHub Issues were built for enterprise sprint planning—they are slow, cumbersome, and overkill when you just want to log bugs at the speed of thought.
+
+### 🤖 An AI Agent's Perspective: Why This Helps LLMs Succeed
+> *"As AI coding agents, our biggest bottleneck is ambiguous context. Prompts like 'fix checkout bug' force us to guess, hallucinate, explore irrelevant files, and burn tokens."*
+
+DevBug Tracker gives AI agents exact, actionable precision:
+- **Pinpoint Code Anchors:** Definite file paths and line numbers (`lib/...:112`) so agents jump straight to the source without scanning the entire workspace.
+- **Verbatim Error Telemetry:** Unmangled stack traces, reproduction steps, and screenshots.
+- **Fail Attempt Memory:** Records past failed hypotheses so agents never loop through the same dead ends.
+
+### ⚡ The New Workflow: Test Everything First, Delegate to AI in One Batch
+1. **Test Continuously Without Interruption:** Stay in flow. Walk through your application end-to-end.
+2. **Capture at Reflex Speed:** Hit `Ctrl+Shift+B`, type the problem, and paste screenshots straight from your clipboard (`Ctrl+V`).
+3. **Single-Click AI Delegation:** When your testing round wraps up, hit **Copy AI Agent Prompt** or point your CLI (`npx devbug-tracker`).
+4. **Relax & Supervise:** Let your AI agents systematically resolve each issue with high-fidelity context while lifecycle statuses sync in realtime.
+
+---
 
 ## 📸 Preview
 
