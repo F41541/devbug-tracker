@@ -49,6 +49,10 @@ export function ProjectManagerModal({
   async function handleSaveProject(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
+    if (isGuest && project) {
+      notify('Editing project metadata is restricted to authenticated users.', 'error')
+      return
+    }
     setIsSubmitting(true)
     try {
       const stackArray = techStack
@@ -127,9 +131,7 @@ export function ProjectManagerModal({
     }
 
     if (isGuest) {
-      onProjectsChange((prev) => prev.filter((p) => p.id !== id))
-      onClose()
-      notify('Project deleted locally', 'success')
+      notify('Project deletion is restricted to authenticated users.', 'error')
       return
     }
     try {

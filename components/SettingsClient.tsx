@@ -27,6 +27,7 @@ import { Toast, ToastData, ToastType } from '@/components/ui/Toast'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { Logo } from '@/components/ui/Logo'
 import { BugModal } from '@/components/bugs/BugModal'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 
@@ -276,9 +277,9 @@ export default function SettingsClient({
           <div className="flex items-center gap-2">
             <Link
               href={isGuest ? '/' : '/project'}
-              className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-black text-sm"
+              className="flex items-center justify-center"
             >
-              DB
+              <Logo size="sm" />
             </Link>
             <span className="font-bold text-sm tracking-tight">Settings</span>
           </div>

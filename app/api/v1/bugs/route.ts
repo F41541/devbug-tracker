@@ -18,7 +18,7 @@ async function authenticateApiKey(req: NextRequest) {
 
   const { data: keyRecord, error } = await supabase
     .from('api_keys')
-    .select('id, name')
+    .select('id, name, user_id')
     .eq('key_hash', keyHash)
     .single()
 
@@ -49,6 +49,21 @@ export async function GET(req: NextRequest) {
 
   const supabase = createAdminClient()
 
+  // Fetch accessible projects owned by the API key creator
+  const { data: userProjects } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('user_id', keyRecord.user_id)
+
+  const allowedProjectIds = (userProjects || []).map((p) => p.id)
+  if (allowedProjectIds.length === 0) {
+    return NextResponse.json({
+      authenticated_as: keyRecord.name,
+      count: 0,
+      bugs: [],
+    })
+  }
+
   let resolvedProjectId = projectId
 
   // If workspace ID provided, resolve project ID
@@ -57,25 +72,28 @@ export async function GET(req: NextRequest) {
       .from('projects')
       .select('id')
       .eq('id', workspaceId)
+      .eq('user_id', keyRecord.user_id)
       .single()
     if (proj) {
       resolvedProjectId = String(proj.id)
     } else {
-      return NextResponse.json({ error: `Workspace with ID ${workspaceId} not found.` }, { status: 404 })
+      return NextResponse.json({ error: `Workspace with ID ${workspaceId} not found or unauthorized.` }, { status: 404 })
     }
+  }
+
+  if (resolvedProjectId && !allowedProjectIds.includes(resolvedProjectId)) {
+    return NextResponse.json({ error: 'Unauthorized: Project does not belong to this API key.' }, { status: 403 })
   }
 
   let query = supabase
     .from('bug_items')
     .select('*, project:projects(*)')
+    .in('project_id', resolvedProjectId ? [resolvedProjectId] : allowedProjectIds)
     .order('order', { ascending: true })
     .order('created_at', { ascending: false })
 
   if (status !== 'all') {
     query = query.eq('status', status)
-  }
-  if (resolvedProjectId) {
-    query = query.eq('project_id', resolvedProjectId)
   }
 
   const { data: bugs, error } = await query
@@ -105,6 +123,23 @@ export async function PATCH(req: NextRequest) {
     }
 
     const supabase = createAdminClient()
+
+    // Verify the bug belongs to a project owned by the API key user
+    const { data: targetBug, error: fetchBugErr } = await supabase
+      .from('bug_items')
+      .select('id, project_id, project:projects(user_id)')
+      .eq('id', id)
+      .single()
+
+    if (fetchBugErr || !targetBug) {
+      return NextResponse.json({ error: 'Bug not found.' }, { status: 404 })
+    }
+
+    const bugOwnerId = (targetBug.project as any)?.user_id
+    if (bugOwnerId !== keyRecord.user_id) {
+      return NextResponse.json({ error: 'Unauthorized: Bug does not belong to your account.' }, { status: 403 })
+    }
+
     const allowedFields = [
       'status',
       'investigation_state',

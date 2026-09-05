@@ -7,6 +7,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
   required?: boolean
   icon?: React.ReactNode
+  rightElement?: React.ReactNode
   error?: string
   helperText?: string
 }
@@ -15,6 +16,7 @@ export function Input({
   label,
   required,
   icon,
+  rightElement,
   error,
   helperText,
   className = '',
@@ -43,8 +45,9 @@ export function Input({
           id={inputId}
           required={required}
           className={cn(
-            'w-full pr-3.5 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-zinc-950 border rounded-xl text-slate-900 dark:text-zinc-100 placeholder-slate-400 focus:outline-none focus:ring-2 transition-all',
+            'w-full py-2 text-xs sm:text-sm bg-slate-50 dark:bg-zinc-950 border rounded-xl text-slate-900 dark:text-zinc-100 placeholder-slate-400 focus:outline-none focus:ring-2 transition-all',
             icon ? 'pl-9' : 'px-3.5',
+            rightElement ? 'pr-10' : 'pr-3.5',
             error
               ? 'border-rose-500 focus:ring-rose-500/50'
               : 'border-slate-200 dark:border-zinc-800 focus:ring-indigo-500/50',
@@ -52,6 +55,11 @@ export function Input({
           )}
           {...props}
         />
+        {rightElement && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+            {rightElement}
+          </div>
+        )}
       </div>
       {error && <p className="text-[11px] text-rose-500">{error}</p>}
       {helperText && !error && <p className="text-[10px] text-slate-400 dark:text-zinc-500">{helperText}</p>}

@@ -5,6 +5,11 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 export const metadata: Metadata = {
   title: 'DevBug Tracker - Solo Dev Bug Fix',
   description: 'A developer-first bug tracker with Kanban, live markdown preview, stack trace logging, and clipboard screenshot paste.',
+  icons: {
+    icon: '/logo.webp',
+    shortcut: '/logo.webp',
+    apple: '/logo.webp',
+  },
 }
 
 export default function RootLayout({

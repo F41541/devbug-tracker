@@ -26,7 +26,26 @@ export async function getBugs(filters?: {
   status?: string
   severity?: string
 }) {
-  const { supabase } = await requireAuth()
+  const { supabase, user } = await requireAuth()
+
+  // First verify user's projects to ensure strict isolation
+  const { data: userProjects, error: projErr } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('user_id', user.id)
+
+  if (projErr) {
+    console.error('Database error fetching user projects for getBugs:', projErr.message)
+    throw new Error('Failed to fetch user projects.')
+  }
+
+  const projectIds = (userProjects || []).map((p) => p.id)
+
+  // If user has no projects, they have no accessible bugs
+  if (projectIds.length === 0) {
+    return []
+  }
+
   let query = supabase
     .from('bug_items')
     .select(`
@@ -34,10 +53,14 @@ export async function getBugs(filters?: {
       project:projects(*),
       attachments(*)
     `)
+    .in('project_id', projectIds)
     .order('order', { ascending: true })
     .order('created_at', { ascending: false })
 
   if (filters?.project_id) {
+    if (!projectIds.includes(filters.project_id)) {
+      return []
+    }
     query = query.eq('project_id', filters.project_id)
   }
   if (filters?.status) {
@@ -266,10 +289,11 @@ export async function deleteBug(id: string) {
 
 // PROJECT ACTIONS
 export async function getProjects() {
-  const { supabase } = await requireAuth()
+  const { supabase, user } = await requireAuth()
   const { data, error } = await supabase
     .from('projects')
     .select('*')
+    .eq('user_id', user.id)
     .order('name', { ascending: true })
 
   if (error) {
@@ -321,26 +345,13 @@ export async function createProject(rawFormData: {
     .select()
     .single()
 
-  if (!error && data) {
-    revalidatePath('/')
-    return data
-  }
-
-  // Graceful fallback jika kolom user_id belum ada
-  const { user_id, ...payloadWithoutUser } = payloadWithUser
-  const { data: fallbackData, error: fallbackError } = await supabase
-    .from('projects')
-    .insert(payloadWithoutUser)
-    .select()
-    .single()
-
-  if (fallbackError) {
-    console.error('Database error in createProject:', fallbackError.message)
-    throw new Error('Failed to create project: ' + fallbackError.message)
+  if (error) {
+    console.error('Database error in createProject:', error.message)
+    throw new Error('Failed to create project: ' + error.message)
   }
 
   revalidatePath('/')
-  return fallbackData
+  return data
 }
 
 export async function updateProject(id: string, rawFormData: {

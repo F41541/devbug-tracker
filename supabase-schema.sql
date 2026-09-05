@@ -16,7 +16,7 @@ DROP TABLE IF EXISTS public.projects CASCADE;
 -- 2. Create Projects Table
 CREATE TABLE public.projects (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL DEFAULT auth.uid(),
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
@@ -73,7 +73,7 @@ CREATE TABLE public.attachments (
 -- 5. Create API Keys Table
 CREATE TABLE public.api_keys (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL DEFAULT auth.uid(),
     name VARCHAR(255) NOT NULL,
     key_hash VARCHAR(255) NOT NULL UNIQUE,
     key_prefix VARCHAR(50) NOT NULL,
@@ -97,22 +97,22 @@ ALTER TABLE public.bug_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.api_keys ENABLE ROW LEVEL SECURITY;
 
--- 8. Define RLS Policies (User-isolated multi-tenant with fallback to unassigned legacy data)
+-- 8. Define RLS Policies (Strict User-isolated multi-tenant)
 CREATE POLICY "Users can manage own projects" ON public.projects
     FOR ALL TO authenticated
-    USING (user_id = auth.uid() OR user_id IS NULL)
-    WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
+    USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Users can manage bugs in accessible projects" ON public.bug_items
     FOR ALL TO authenticated
     USING (
-      project_id IS NULL OR project_id IN (
-        SELECT id FROM public.projects WHERE user_id = auth.uid() OR user_id IS NULL
+      project_id IN (
+        SELECT id FROM public.projects WHERE user_id = auth.uid()
       )
     )
     WITH CHECK (
-      project_id IS NULL OR project_id IN (
-        SELECT id FROM public.projects WHERE user_id = auth.uid() OR user_id IS NULL
+      project_id IN (
+        SELECT id FROM public.projects WHERE user_id = auth.uid()
       )
     );
 
@@ -121,22 +121,22 @@ CREATE POLICY "Users can manage attachments in accessible bugs" ON public.attach
     USING (
       bug_item_id IN (
         SELECT b.id FROM public.bug_items b
-        LEFT JOIN public.projects p ON b.project_id = p.id
-        WHERE p.id IS NULL OR p.user_id = auth.uid() OR p.user_id IS NULL
+        JOIN public.projects p ON b.project_id = p.id
+        WHERE p.user_id = auth.uid()
       )
     )
     WITH CHECK (
       bug_item_id IN (
         SELECT b.id FROM public.bug_items b
-        LEFT JOIN public.projects p ON b.project_id = p.id
-        WHERE p.id IS NULL OR p.user_id = auth.uid() OR p.user_id IS NULL
+        JOIN public.projects p ON b.project_id = p.id
+        WHERE p.user_id = auth.uid()
       )
     );
 
 CREATE POLICY "Users can manage own api_keys" ON public.api_keys
     FOR ALL TO authenticated
-    USING (user_id = auth.uid() OR user_id IS NULL)
-    WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
+    USING (user_id = auth.uid())
+    WITH CHECK (user_id = auth.uid());
 
 -- 9. Setup Supabase Realtime Broadcasting
 ALTER TABLE public.projects REPLICA IDENTITY FULL;

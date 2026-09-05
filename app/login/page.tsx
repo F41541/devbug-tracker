@@ -1,9 +1,11 @@
 'use client'
 
 import React, { useState, useTransition } from 'react'
-import { Bug, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react'
+import Link from 'next/link'
+import { Lock, Mail, ArrowRight, ShieldCheck, UserPlus } from 'lucide-react'
 import { login } from '@/app/auth/actions'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { Logo } from '@/components/ui/Logo'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -31,8 +33,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl p-8 shadow-xl space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30">
-            <Bug className="w-8 h-8" />
+          <div className="inline-flex justify-center">
+            <Logo size="xl" className="shadow-lg shadow-indigo-600/20" />
           </div>
           <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
             DevBug Tracker
@@ -86,11 +88,19 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="p-2.5 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl text-[11px] text-slate-500 dark:text-zinc-400 flex flex-col gap-0.5">
-            <span className="font-semibold text-slate-700 dark:text-zinc-300">Default Admin Credentials:</span>
-            <span>Email: <code className="font-mono text-indigo-600 dark:text-indigo-400">admin@devbug.io</code></span>
-            <span>Password: <code className="font-mono text-indigo-600 dark:text-indigo-400">123456</code></span>
-          </div>
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="p-2.5 bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 rounded-xl text-[11px] text-slate-500 dark:text-zinc-400 flex flex-col gap-0.5">
+              <span className="font-semibold text-slate-700 dark:text-zinc-300">
+                Default Admin Credentials (Dev Only):
+              </span>
+              <span>
+                Email: <code className="font-mono text-indigo-600 dark:text-indigo-400">admin@devbug.io</code>
+              </span>
+              <span>
+                Password: <code className="font-mono text-indigo-600 dark:text-indigo-400">123456</code>
+              </span>
+            </div>
+          )}
 
           <button
             type="submit"
@@ -106,6 +116,16 @@ export default function LoginPage() {
               </>
             )}
           </button>
+
+          <div className="text-center pt-2">
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold transition"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Don&apos;t have an account? Register now</span>
+            </Link>
+          </div>
         </form>
 
         <div className="pt-4 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 dark:text-zinc-500">

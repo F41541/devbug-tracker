@@ -22,29 +22,18 @@ async function requireAuth() {
 export async function getApiKeys(): Promise<ApiKey[]> {
   const { supabase, user } = await requireAuth()
   
-  // 1. Coba query dengan filter user_id
   const { data, error } = await supabase
     .from('api_keys')
     .select('id, name, key_prefix, created_at, last_used_at')
-    .or(`user_id.eq.${user.id},user_id.is.null`)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
-  if (!error && data) {
-    return data as ApiKey[]
-  }
-
-  // 2. Graceful fallback jika database remote belum sempat dieksekusi migrasi kolom user_id
-  const { data: fallbackData, error: fallbackError } = await supabase
-    .from('api_keys')
-    .select('id, name, key_prefix, created_at, last_used_at')
-    .order('created_at', { ascending: false })
-
-  if (fallbackError) {
-    console.error('Failed to fetch API keys:', fallbackError.message)
+  if (error) {
+    console.error('Failed to fetch API keys:', error.message)
     return []
   }
 
-  return (fallbackData || []) as ApiKey[]
+  return (data || []) as ApiKey[]
 }
 
 export async function createApiKey(name: string): Promise<{ apiKey: ApiKey; rawSecret: string }> {
@@ -62,7 +51,7 @@ export async function createApiKey(name: string): Promise<{ apiKey: ApiKey; rawS
   
   const keyHash = crypto.createHash('sha256').update(rawSecret).digest('hex')
 
-  // 1. Coba insert dengan user_id
+  // Insert dengan user_id wajib
   const { data, error } = await supabase
     .from('api_keys')
     .insert({
@@ -74,33 +63,14 @@ export async function createApiKey(name: string): Promise<{ apiKey: ApiKey; rawS
     .select('id, name, key_prefix, created_at, last_used_at')
     .single()
 
-  if (!error && data) {
-    revalidatePath('/settings')
-    return {
-      apiKey: data as ApiKey,
-      rawSecret,
-    }
-  }
-
-  // 2. Graceful fallback jika tabel belum punya kolom user_id
-  const { data: fallbackData, error: fallbackError } = await supabase
-    .from('api_keys')
-    .insert({
-      name: name.trim(),
-      key_hash: keyHash,
-      key_prefix: keyPrefix,
-    })
-    .select('id, name, key_prefix, created_at, last_used_at')
-    .single()
-
-  if (fallbackError) {
-    console.error('Failed to create API key:', fallbackError.message)
-    throw new Error('Failed to create API key: ' + fallbackError.message)
+  if (error) {
+    console.error('Failed to create API key:', error.message)
+    throw new Error('Failed to create API key: ' + error.message)
   }
 
   revalidatePath('/settings')
   return {
-    apiKey: fallbackData as ApiKey,
+    apiKey: data as ApiKey,
     rawSecret,
   }
 }

@@ -154,7 +154,7 @@ export function ProjectsHub({
               project={proj}
               stats={stats}
               onSelect={() => onSelectProject(proj.id)}
-              onEdit={onEditProject}
+              onEdit={isGuest ? undefined : onEditProject}
             />
           )
         })}

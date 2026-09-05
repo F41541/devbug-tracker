@@ -12,6 +12,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { Logo } from '@/components/ui/Logo'
 import { logout } from '@/app/auth/actions'
 import { Project, BugItem } from '@/types'
 
@@ -51,9 +52,7 @@ export function AppSidebar({
             onClick={() => onSelectProject(null)}
             className="flex items-center gap-2.5 cursor-pointer group"
           >
-            <div className="p-2 rounded-xl bg-indigo-600 group-hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition-colors flex-shrink-0">
-              <Bug className="w-5 h-5" />
-            </div>
+            <Logo size="lg" className="shadow-md shadow-indigo-600/10 group-hover:scale-105 transition-transform" />
             <div>
               <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 DevBug Tracker
@@ -63,9 +62,7 @@ export function AppSidebar({
           </div>
         ) : (
           <Link href={isGuest ? '/' : '/project'} className="flex items-center gap-2.5 group">
-            <div className="p-2 rounded-xl bg-indigo-600 group-hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition-colors flex-shrink-0">
-              <Bug className="w-5 h-5" />
-            </div>
+            <Logo size="lg" className="shadow-md shadow-indigo-600/10 group-hover:scale-105 transition-transform" />
             <div>
               <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 DevBug Tracker

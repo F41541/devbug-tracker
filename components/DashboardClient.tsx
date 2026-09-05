@@ -25,6 +25,7 @@ import { Toast, ToastData, ToastType } from '@/components/ui/Toast'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
+import { Logo } from '@/components/ui/Logo'
 import { KanbanView, ListView, BugModal, BugDetailModal } from '@/components/bugs'
 import { ProjectManagerModal } from '@/components/projects'
 import { CopyAgentPromptModal } from '@/components/bugs/CopyAgentPromptModal'
@@ -196,7 +197,7 @@ export default function DashboardClient({
               .eq('id', payload.new.id)
               .single()
 
-            if (newBug) {
+            if (newBug && newBug.project) {
               setBugs((prev) => {
                 if (prev.some((b) => b.id === newBug.id)) return prev
                 return [newBug, ...prev]
@@ -228,23 +229,38 @@ export default function DashboardClient({
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'projects' },
-        (payload) => {
+        async (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newProj = payload.new as Project
-            setProjects((prev) => {
-              if (prev.some((p) => p.id === newProj.id)) return prev
-              return [...prev, newProj].sort((a, b) => a.name.localeCompare(b.name))
-            })
+            // Verify project is accessible to current user
+            const { data: newProj } = await supabase
+              .from('projects')
+              .select('*')
+              .eq('id', payload.new.id)
+              .single()
+
+            if (newProj) {
+              setProjects((prev) => {
+                if (prev.some((p) => p.id === newProj.id)) return prev
+                return [...prev, newProj].sort((a, b) => a.name.localeCompare(b.name))
+              })
+            }
           } else if (payload.eventType === 'UPDATE') {
-            const updatedProj = payload.new as Project
-            setProjects((prev) =>
-              prev.map((p) => (p.id === updatedProj.id ? updatedProj : p))
-            )
-            setBugs((prev) =>
-              prev.map((b) =>
-                b.project_id === updatedProj.id ? { ...b, project: updatedProj } : b
+            const { data: updatedProj } = await supabase
+              .from('projects')
+              .select('*')
+              .eq('id', payload.new.id)
+              .single()
+
+            if (updatedProj) {
+              setProjects((prev) =>
+                prev.map((p) => (p.id === updatedProj.id ? updatedProj : p))
               )
-            )
+              setBugs((prev) =>
+                prev.map((b) =>
+                  b.project_id === updatedProj.id ? { ...b, project: updatedProj } : b
+                )
+              )
+            }
           } else if (payload.eventType === 'DELETE') {
             const deletedId = payload.old.id
             setProjects((prev) => prev.filter((p) => p.id !== deletedId))
@@ -594,10 +610,14 @@ export default function DashboardClient({
                 setEditingProject(null)
                 setShowProjectModal(true)
               }}
-              onEditProject={(proj) => {
-                setEditingProject(proj)
-                setShowProjectModal(true)
-              }}
+              onEditProject={
+                isGuest
+                  ? undefined
+                  : (proj) => {
+                      setEditingProject(proj)
+                      setShowProjectModal(true)
+                    }
+              }
             />
           ) : (
             <>
@@ -953,9 +973,7 @@ export default function DashboardClient({
           <div className="relative w-4/5 max-w-xs bg-white dark:bg-zinc-900 h-full shadow-2xl flex flex-col z-10 border-r border-slate-200 dark:border-zinc-800 animate-in slide-in-from-left duration-200">
             <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
-                  <Bug className="w-5 h-5" />
-                </div>
+                <Logo size="md" />
                 <div>
                   <h2 className="text-sm font-bold text-slate-900 dark:text-zinc-100">DevBug Tracker</h2>
                   <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate max-w-[150px]">
@@ -1003,6 +1021,10 @@ export default function DashboardClient({
                   type="button"
                   onClick={() => {
                     setIsMobileSidebarOpen(false)
+                    if (isGuest) {
+                      handleRequireAuth('Manage Projects')
+                      return
+                    }
                     setShowProjectModal(true)
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
