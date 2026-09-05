@@ -33,3 +33,6 @@ yarn-error.log*
 Brainstroming.md
 *.brainstorming.md
 
+# MCP & Test Artifacts
+.playwright-mcp/
+
