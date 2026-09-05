@@ -96,9 +96,15 @@ cd devbug-tracker
 npm install
 ```
 
-### 2. Konfigurasi Environment Variables
+### 2. Panduan Setup Otomatis
 
-Salin berkas konfigurasi contoh yang disediakan:
+Jalankan wizard interaktif untuk memilih konfigurasi Supabase Cloud atau Local Docker PostgreSQL secara otomatis:
+
+```bash
+npm run setup
+```
+
+Atau salin berkas konfigurasi secara manual:
 
 ```bash
 cp .env.example .env.local

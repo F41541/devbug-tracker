@@ -7,35 +7,44 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import crypto from 'crypto'
 
-const OTP_SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || 'devbug-otp-secret-key-salt'
+const OTP_SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'devbug-tracker-internal-otp-signing-key-fallback'
 
-function generateRegistrationToken(email: string, code: string, password: string,expiresAt: number): string {
-  const data = JSON.stringify({ email, code, password, exp: expiresAt })
-  const cipher = crypto.createCipheriv(
-    'aes-256-gcm',
-    crypto.createHash('sha256').update(OTP_SECRET).digest(),
-    Buffer.alloc(12, 0)
-  )
+function getEncryptionKey(): Buffer {
+  return crypto.createHash('sha256').update(OTP_SECRET).digest()
+}
+
+interface RegistrationPayload {
+  email: string
+  code: string
+  password: string
+  exp: number
+  attempts: number
+  lastSentAt: number
+}
+
+function generateRegistrationToken(payload: RegistrationPayload): string {
+  const data = JSON.stringify(payload)
+  const iv = crypto.randomBytes(12)
+  const cipher = crypto.createCipheriv('aes-256-gcm', getEncryptionKey(), iv)
   let encrypted = cipher.update(data, 'utf8', 'hex')
   encrypted += cipher.final('hex')
   const tag = cipher.getAuthTag().toString('hex')
-  return `${encrypted}.${tag}`
+  return `${iv.toString('hex')}.${encrypted}.${tag}`
 }
 
-function verifyRegistrationToken(token: string): { email: string; code: string; password: string; exp: number } | null {
+function verifyRegistrationToken(token: string): RegistrationPayload | null {
   try {
-    const [encrypted, tag] = token.split('.')
-    if (!encrypted || !tag) return null
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const [ivHex, encrypted, tagHex] = parts
+    if (!ivHex || !encrypted || !tagHex) return null
 
-    const decipher = crypto.createDecipheriv(
-      'aes-256-gcm',
-      crypto.createHash('sha256').update(OTP_SECRET).digest(),
-      Buffer.alloc(12, 0)
-    )
-    decipher.setAuthTag(Buffer.from(tag, 'hex'))
+    const iv = Buffer.from(ivHex, 'hex')
+    const decipher = crypto.createDecipheriv('aes-256-gcm', getEncryptionKey(), iv)
+    decipher.setAuthTag(Buffer.from(tagHex, 'hex'))
     let decrypted = decipher.update(encrypted, 'hex', 'utf8')
     decrypted += decipher.final('utf8')
-    const parsed = JSON.parse(decrypted)
+    const parsed: RegistrationPayload = JSON.parse(decrypted)
 
     if (Date.now() > parsed.exp) {
       return null
@@ -73,7 +82,8 @@ export async function requestRegistration(formData: FormData) {
 
   // Generate 6-digit OTP
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString()
-  const expiresAt = Date.now() + 10 * 60 * 1000 // 10 minutes
+  const now = Date.now()
+  const expiresAt = now + 10 * 60 * 1000 // 10 minutes
 
   try {
     // Send email via Gmail SMTP
@@ -83,10 +93,17 @@ export async function requestRegistration(formData: FormData) {
     return { error: `Failed to send verification email: ${err.message || 'Please check your SMTP configuration.'}` }
   }
 
-  // Simpan token payload terenkripsi di HTTP-only cookie
-  const token = generateRegistrationToken(email, otpCode, password, expiresAt)
+  // Simpan token payload terenkripsi dengan unique IV di HTTP-only cookie
+  const token = generateRegistrationToken({
+    email,
+    code: otpCode,
+    password,
+    exp: expiresAt,
+    attempts: 0,
+    lastSentAt: now,
+  })
   const cookieStore = await cookies()
-  cookieStore.set('devbug_reg_pending', token, {
+  cookieStore.set('devbug_tracker_reg_pending', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -104,7 +121,7 @@ export async function verifyRegistrationOtp(code: string) {
   }
 
   const cookieStore = await cookies()
-  const tokenCookie = cookieStore.get('devbug_reg_pending')
+  const tokenCookie = cookieStore.get('devbug_tracker_reg_pending')
 
   if (!tokenCookie || !tokenCookie.value) {
     return { error: 'Verification session expired. Please register again.' }
@@ -115,8 +132,33 @@ export async function verifyRegistrationOtp(code: string) {
     return { error: 'Invalid or expired code. Please try again.' }
   }
 
+  // Enforce brute-force lockout (max 5 attempts)
+  if (payload.attempts >= 5) {
+    cookieStore.delete('devbug_tracker_reg_pending')
+    return { error: 'Too many incorrect attempts. Verification session terminated. Please register again.' }
+  }
+
   if (payload.code !== cleanCode) {
-    return { error: 'Incorrect verification code. Please check your inbox again.' }
+    const remainingAttempts = 4 - payload.attempts
+    if (remainingAttempts <= 0) {
+      cookieStore.delete('devbug_tracker_reg_pending')
+      return { error: 'Too many incorrect attempts. Please start registration again.' }
+    }
+
+    // Update attempts counter with fresh IV
+    const updatedToken = generateRegistrationToken({
+      ...payload,
+      attempts: payload.attempts + 1,
+    })
+    cookieStore.set('devbug_tracker_reg_pending', updatedToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 600,
+      path: '/',
+    })
+
+    return { error: `Incorrect verification code. ${remainingAttempts} attempt(s) remaining.` }
   }
 
   // Create or confirm user in Supabase
@@ -129,13 +171,14 @@ export async function verifyRegistrationOtp(code: string) {
 
   if (createError) {
     if (createError.message.includes('already registered')) {
+      cookieStore.delete('devbug_tracker_reg_pending')
       return { error: 'This email is already registered. Please log in directly.' }
     }
     return { error: createError.message }
   }
 
   // Delete pending cookie
-  cookieStore.delete('devbug_reg_pending')
+  cookieStore.delete('devbug_tracker_reg_pending')
 
   // Sign in user directly
   const supabase = await createClient()
@@ -153,7 +196,7 @@ export async function verifyRegistrationOtp(code: string) {
 
 export async function resendRegistrationOtp() {
   const cookieStore = await cookies()
-  const tokenCookie = cookieStore.get('devbug_reg_pending')
+  const tokenCookie = cookieStore.get('devbug_tracker_reg_pending')
 
   if (!tokenCookie || !tokenCookie.value) {
     return { error: 'Registration session expired. Please enter your details again.' }
@@ -164,8 +207,15 @@ export async function resendRegistrationOtp() {
     return { error: 'Registration session expired.' }
   }
 
+  // Rate limit resend to once every 30 seconds
+  const now = Date.now()
+  if (payload.lastSentAt && now - payload.lastSentAt < 30000) {
+    const waitSec = Math.ceil((30000 - (now - payload.lastSentAt)) / 1000)
+    return { error: `Please wait ${waitSec} seconds before requesting a new code.` }
+  }
+
   const newOtpCode = Math.floor(100000 + Math.random() * 900000).toString()
-  const expiresAt = Date.now() + 10 * 60 * 1000
+  const expiresAt = now + 10 * 60 * 1000
 
   try {
     await sendVerificationEmail(payload.email, newOtpCode)
@@ -173,8 +223,14 @@ export async function resendRegistrationOtp() {
     return { error: `Failed to resend email: ${err.message}` }
   }
 
-  const newToken = generateRegistrationToken(payload.email, newOtpCode, payload.password, expiresAt)
-  cookieStore.set('devbug_reg_pending', newToken, {
+  const newToken = generateRegistrationToken({
+    ...payload,
+    code: newOtpCode,
+    exp: expiresAt,
+    attempts: 0,
+    lastSentAt: now,
+  })
+  cookieStore.set('devbug_tracker_reg_pending', newToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -214,7 +270,7 @@ export async function logout() {
 
 export async function updateAccountEmail(newEmail: string) {
   if (!newEmail || !newEmail.trim()) {
-    throw new Error('Email baru tidak boleh kosong.')
+    throw new Error('New email cannot be empty.')
   }
 
   const supabase = await createClient()
@@ -236,8 +292,14 @@ export async function updateAccountEmail(newEmail: string) {
 }
 
 export async function updateAccountPassword(newPassword: string, confirmPassword?: string) {
-  if (!newPassword || newPassword.length < 6) {
-    throw new Error('Password must be at least 6 characters.')
+  const hasMinLength = newPassword && newPassword.length >= 8
+  const hasUppercase = /[A-Z]/.test(newPassword || '')
+  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword || '')
+
+  if (!hasMinLength || !hasUppercase || !hasSpecialChar) {
+    throw new Error(
+      'Password must be at least 8 characters, containing at least 1 uppercase letter and 1 special character.'
+    )
   }
 
   if (confirmPassword && newPassword !== confirmPassword) {

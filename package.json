@@ -1,15 +1,15 @@
 {
   "name": "devbug-tracker",
   "version": "1.0.0",
-  "private": true,
   "bin": {
-    "devbug": "./bin/devbug.mjs"
+    "devbug-tracker": "./bin/devbug-tracker.mjs"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit",
+    "setup": "node scripts/setup.mjs",
     "mcp": "node bin/mcp-server.mjs",
     "seed": "node --env-file=.env.local scripts/seed.mjs"
   },

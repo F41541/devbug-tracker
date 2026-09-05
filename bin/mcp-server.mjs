@@ -12,7 +12,7 @@ const apiKey = process.env.DEVBUG_API_KEY
 const defaultWorkspaceId = process.env.DEVBUG_WORKSPACE_ID
 
 if (!apiKey) {
-  console.error('DEVBUG_API_KEY environment variable is required to run devbug-mcp-server.')
+  console.error('DEVBUG_API_KEY environment variable is required to run devbug-tracker-mcp-server.')
   process.exit(1)
 }
 
@@ -253,7 +253,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport()
   await server.connect(transport)
-  console.error('DevBug MCP Server running on stdio transport.')
+  console.error('DevBug Tracker MCP Server running on stdio transport.')
 }
 
 main().catch((err) => {

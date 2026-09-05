@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { BugItem, BugStatus, BugSeverity, Project } from '@/types'
 import { bugInputSchema, projectInputSchema } from '@/lib/validations'
 
+import crypto from 'crypto'
+
 async function requireAuth() {
   const supabase = await createClient()
   const {
@@ -17,6 +19,14 @@ async function requireAuth() {
   }
 
   return { supabase, user }
+}
+
+function revalidateAllPaths(projectId?: string | null) {
+  revalidatePath('/')
+  revalidatePath('/project')
+  if (projectId) {
+    revalidatePath(`/project/${projectId}`)
+  }
 }
 
 // BUG ACTIONS
@@ -101,7 +111,7 @@ export async function createBug(rawFormData: {
   actual_result?: string | null
   attachments?: { file_path: string; file_name: string; file_type: string; file_size: number }[]
 }) {
-  const { supabase } = await requireAuth()
+  const { supabase, user } = await requireAuth()
 
   const parsed = bugInputSchema.safeParse(rawFormData)
   if (!parsed.success) {
@@ -110,6 +120,18 @@ export async function createBug(rawFormData: {
   }
 
   const formData = parsed.data
+
+  // Verify project ownership to prevent IDOR / cross-tenant pollution
+  const { data: userProject, error: projCheckErr } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('id', formData.project_id)
+    .eq('user_id', user.id)
+    .single()
+
+  if (projCheckErr || !userProject) {
+    throw new Error('Forbidden: Selected project does not exist or belong to your account.')
+  }
   
   const insertPayload = {
     title: formData.title,
@@ -160,7 +182,7 @@ export async function createBug(rawFormData: {
     }
   }
 
-  revalidatePath('/')
+  revalidateAllPaths(formData.project_id)
   return bug
 }
 
@@ -183,7 +205,7 @@ export async function updateBug(
     newAttachments?: { file_path: string; file_name: string; file_type: string; file_size: number }[]
   }
 ) {
-  const { supabase } = await requireAuth()
+  const { supabase, user } = await requireAuth()
 
   const parsed = bugInputSchema.safeParse(rawFormData)
   if (!parsed.success) {
@@ -192,6 +214,18 @@ export async function updateBug(
   }
 
   const formData = parsed.data
+
+  // Verify target project ownership
+  const { data: userProject, error: projCheckErr } = await supabase
+    .from('projects')
+    .select('id')
+    .eq('id', formData.project_id)
+    .eq('user_id', user.id)
+    .single()
+
+  if (projCheckErr || !userProject) {
+    throw new Error('Forbidden: Target project does not belong to your account.')
+  }
 
   const updatePayload: Record<string, any> = {
     title: formData.title,
@@ -249,7 +283,7 @@ export async function updateBug(
     }
   }
 
-  revalidatePath('/')
+  revalidateAllPaths(formData.project_id)
   return bug
 }
 
@@ -265,26 +299,34 @@ export async function updateBugStatus(id: string, status: BugStatus) {
     payload.resolved_at = null
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from('bug_items')
     .update(payload)
     .eq('id', id)
+    .select('project_id')
+    .single()
 
   if (error) {
     console.error('Database error in updateBugStatus:', error.message)
     throw new Error('Failed to update status.')
   }
-  revalidatePath('/')
+  revalidateAllPaths(updated?.project_id)
 }
 
 export async function deleteBug(id: string) {
   const { supabase } = await requireAuth()
-  const { error } = await supabase.from('bug_items').delete().eq('id', id)
+  const { data: deleted, error } = await supabase
+    .from('bug_items')
+    .delete()
+    .eq('id', id)
+    .select('project_id')
+    .single()
+
   if (error) {
     console.error('Database error in deleteBug:', error.message)
     throw new Error('Failed to delete bug.')
   }
-  revalidatePath('/')
+  revalidateAllPaths(deleted?.project_id)
 }
 
 // PROJECT ACTIONS
@@ -327,10 +369,11 @@ export async function createProject(rawFormData: {
     baseSlug = 'project'
   }
   
+  const randomSuffix = crypto.randomBytes(3).toString('hex')
   const payloadWithUser = {
     user_id: user.id,
     name: formData.name,
-    slug: `${baseSlug}-${Date.now().toString().slice(-4)}`,
+    slug: `${baseSlug}-${randomSuffix}`,
     color: formData.color || '#6366f1',
     description: formData.description || null,
     repository_url: formData.repository_url || null,
@@ -350,7 +393,7 @@ export async function createProject(rawFormData: {
     throw new Error('Failed to create project: ' + error.message)
   }
 
-  revalidatePath('/')
+  revalidateAllPaths(data.id)
   return data
 }
 
@@ -363,7 +406,7 @@ export async function updateProject(id: string, rawFormData: {
   package_manager?: string | null
   test_command?: string | null
 }) {
-  const { supabase } = await requireAuth()
+  const { supabase, user } = await requireAuth()
 
   const parsed = projectInputSchema.safeParse(rawFormData)
   if (!parsed.success) {
@@ -386,6 +429,7 @@ export async function updateProject(id: string, rawFormData: {
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
+    .eq('user_id', user.id)
     .select()
     .single()
 
@@ -393,16 +437,17 @@ export async function updateProject(id: string, rawFormData: {
     console.error('Database error in updateProject:', error.message)
     throw new Error('Failed to update project.')
   }
-  revalidatePath('/')
+  revalidateAllPaths(id)
   return data
 }
 
 export async function getProjectByUuid(idOrUuid: string) {
-  const { supabase } = await requireAuth()
+  const { supabase, user } = await requireAuth()
   const { data, error } = await supabase
     .from('projects')
     .select('*')
     .eq('id', idOrUuid)
+    .eq('user_id', user.id)
     .single()
 
   if (error || !data) {
@@ -412,11 +457,16 @@ export async function getProjectByUuid(idOrUuid: string) {
 }
 
 export async function deleteProject(id: string) {
-  const { supabase } = await requireAuth()
-  const { error } = await supabase.from('projects').delete().eq('id', id)
+  const { supabase, user } = await requireAuth()
+  const { error } = await supabase
+    .from('projects')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+
   if (error) {
     console.error('Database error in deleteProject:', error.message)
     throw new Error('Failed to delete project.')
   }
-  revalidatePath('/')
+  revalidateAllPaths(id)
 }

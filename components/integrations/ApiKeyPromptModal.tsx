@@ -40,24 +40,20 @@ export function ApiKeyPromptModal({
         const h1 = (randHex() + randHex()).slice(0, 16)
         const h2 = randHex().slice(0, 6)
         const h3 = randHex().slice(0, 8)
-        const rawSecret = `devbug-${h1}-${h2}-${h3}`
+        const rawSecret = `devbug-tracker-${h1}-${h2}-${h3}`
         const newKey: ApiKey = {
           id: String(Date.now()),
           name: name.trim(),
-          key_prefix: `devbug-${h1.slice(0, 4)}...`,
+          key_prefix: `devbug-tracker-${h1.slice(0, 4)}...`,
           raw_key: rawSecret,
           created_at: new Date().toISOString(),
           last_used_at: null,
         }
         if (typeof window !== 'undefined') {
           try {
-            const stored = localStorage.getItem('devbug_guest_api_keys')
+            const stored = localStorage.getItem('devbug_tracker_guest_api_keys') || localStorage.getItem('devbug_guest_api_keys')
             const list = stored ? JSON.parse(stored) : []
-            localStorage.setItem('devbug_guest_api_keys', JSON.stringify([newKey, ...list]))
-            const storedSecrets = localStorage.getItem('devbug_local_api_secrets')
-            const secretMap = storedSecrets ? JSON.parse(storedSecrets) : {}
-            secretMap[newKey.id] = rawSecret
-            localStorage.setItem('devbug_local_api_secrets', JSON.stringify(secretMap))
+            localStorage.setItem('devbug_tracker_guest_api_keys', JSON.stringify([newKey, ...list]))
           } catch {
             // ignore
           }
@@ -71,19 +67,9 @@ export function ApiKeyPromptModal({
           ...res.apiKey,
           raw_key: res.rawSecret,
         }
-        if (typeof window !== 'undefined') {
-          try {
-            const storedSecrets = localStorage.getItem('devbug_local_api_secrets')
-            const secretMap = storedSecrets ? JSON.parse(storedSecrets) : {}
-            secretMap[res.apiKey.id] = res.rawSecret
-            localStorage.setItem('devbug_local_api_secrets', JSON.stringify(secretMap))
-          } catch {
-            // ignore
-          }
-        }
         setCreatedSecret(res.rawSecret)
         onKeyCreated(keyWithSecret)
-        notify('API Key created successfully!', 'success')
+        notify('API Key created successfully! Copy it now.', 'success')
       }
     } catch (err: any) {
       notify(err.message || 'Failed to create API key', 'error')

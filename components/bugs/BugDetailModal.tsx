@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Sparkles, Edit2, Trash2 } from 'lucide-react'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
@@ -28,6 +28,19 @@ export function BugDetailModal({
   onDelete,
 }: BugDetailModalProps) {
   const bugDisplayId = displayNumber !== undefined ? displayNumber : bug.id
+
+  const renderedDescriptionHtml = useMemo(() => {
+    if (!bug.description) return ''
+    try {
+      const rawParsed = marked.parse(bug.description, { async: false }) as string
+      if (typeof window !== 'undefined') {
+        return DOMPurify.sanitize(rawParsed)
+      }
+      return rawParsed
+    } catch {
+      return bug.description
+    }
+  }, [bug.description])
 
   const headerActions = (
     <div className="flex items-center gap-1.5">
@@ -147,7 +160,7 @@ export function BugDetailModal({
             <div
               className="text-xs prose dark:prose-invert max-w-none leading-relaxed"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(marked.parse(bug.description) as string),
+                __html: renderedDescriptionHtml,
               }}
             />
           </div>

@@ -47,25 +47,11 @@ export function CopyAgentPromptModal({
     setCurrentApiKeys(apiKeys)
   }, [apiKeys])
 
-  // Cari key aktif default dari session secrets, persistent localStorage, atau raw_key
+  // Find default active key from raw_key or key_prefix
   useEffect(() => {
     if (currentApiKeys.length > 0) {
-      let storedSecret: string | null = null
-      if (typeof window !== 'undefined') {
-        try {
-          const stored = localStorage.getItem('devbug_local_api_secrets')
-          if (stored) {
-            const secretMap = JSON.parse(stored)
-            storedSecret = secretMap[currentApiKeys[0].id] || null
-          }
-        } catch {
-          // ignore
-        }
-      }
-
       const activeSecret =
         currentApiKeys[0].raw_key ||
-        storedSecret ||
         (currentApiKeys[0].key_prefix.endsWith('...') ? '' : currentApiKeys[0].key_prefix)
 
       setSelectedKey(activeSecret)
@@ -271,7 +257,7 @@ export function CopyAgentPromptModal({
                     Watch Live Sync in Browser
                   </span>
                   <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    The agent will run <code className="px-1 py-0.5 rounded bg-slate-200 dark:bg-zinc-800 font-mono text-[10px]">npx devbug start</code> and <code className="px-1 py-0.5 rounded bg-slate-200 dark:bg-zinc-800 font-mono text-[10px]">npx devbug resolve</code> CLI commands. Your dashboard cards update in real time.
+                    The agent will run <code className="px-1 py-0.5 rounded bg-slate-200 dark:bg-zinc-800 font-mono text-[10px]">npx devbug-tracker start</code> and <code className="px-1 py-0.5 rounded bg-slate-200 dark:bg-zinc-800 font-mono text-[10px]">npx devbug-tracker resolve</code> CLI commands. Your dashboard cards update in real time.
                   </p>
                 </div>
               </div>

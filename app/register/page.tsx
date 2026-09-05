@@ -121,7 +121,7 @@ export default function RegisterPage() {
             <Logo size="xl" className="shadow-lg shadow-indigo-600/20" />
           </div>
           <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-zinc-100">
-            {step === 'form' ? 'Create DevBug Account' : 'Verify Your Email'}
+            {step === 'form' ? 'Create DevBug Tracker Account' : 'Verify Your Email'}
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400">
             {step === 'form'

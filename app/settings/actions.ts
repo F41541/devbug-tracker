@@ -42,16 +42,16 @@ export async function createApiKey(name: string): Promise<{ apiKey: ApiKey; rawS
     throw new Error('API Key name is required.')
   }
 
-  // Generate format: devbug-xxxxxxxxxxxxxxxx-xxxxxx-xxxxxxxx (total 39 chars)
+  // Generate format: devbug-tracker-xxxxxxxxxxxxxxxx-xxxxxx-xxxxxxxx
   const hex1 = crypto.randomBytes(8).toString('hex') // 16 chars
   const hex2 = crypto.randomBytes(3).toString('hex') // 6 chars
   const hex3 = crypto.randomBytes(4).toString('hex') // 8 chars
-  const rawSecret = `devbug-${hex1}-${hex2}-${hex3}`
-  const keyPrefix = `devbug-${hex1.slice(0, 4)}...`
+  const rawSecret = `devbug-tracker-${hex1}-${hex2}-${hex3}`
+  const keyPrefix = `devbug-tracker-${hex1.slice(0, 4)}...`
   
   const keyHash = crypto.createHash('sha256').update(rawSecret).digest('hex')
 
-  // Insert dengan user_id wajib
+  // Insert with required user_id
   const { data, error } = await supabase
     .from('api_keys')
     .insert({

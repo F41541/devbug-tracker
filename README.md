@@ -96,9 +96,15 @@ cd devbug-tracker
 npm install
 ```
 
-### 2. Environment Configuration
+### 2. Quick Setup Wizard
 
-Create a local environment file from the provided template:
+Run the interactive setup wizard to configure either Supabase Cloud or Local Docker PostgreSQL automatically:
+
+```bash
+npm run setup
+```
+
+Or manually configure `.env.local`:
 
 ```bash
 cp .env.example .env.local

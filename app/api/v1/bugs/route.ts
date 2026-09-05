@@ -2,6 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import crypto from 'crypto'
 
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+    },
+  })
+}
+
+function corsJson(body: any, init?: { status?: number; headers?: Record<string, string> }) {
+  return NextResponse.json(body, {
+    status: init?.status || 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      ...(init?.headers || {}),
+    },
+  })
+}
+
 async function authenticateApiKey(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   const xApiKey = req.headers.get('x-api-key')
@@ -136,8 +157,8 @@ export async function PATCH(req: NextRequest) {
     }
 
     const bugOwnerId = (targetBug.project as any)?.user_id
-    if (bugOwnerId !== keyRecord.user_id) {
-      return NextResponse.json({ error: 'Unauthorized: Bug does not belong to your account.' }, { status: 403 })
+    if (!targetBug.project || bugOwnerId !== keyRecord.user_id) {
+      return corsJson({ error: 'Unauthorized: Bug does not belong to your account.' }, { status: 403 })
     }
 
     const allowedFields = [
@@ -179,7 +200,7 @@ export async function PATCH(req: NextRequest) {
         ...priorAttempts,
         {
           timestamp: new Date().toISOString(),
-          agent: keyRecord.name || 'DevBug Agent',
+          agent: keyRecord.name || 'DevBug Tracker Agent',
           hypothesis: updateFields.failed_attempt.hypothesis || 'Attempted fix',
           files_modified: updateFields.failed_attempt.files_modified || [],
           failure_reason: updateFields.failed_attempt.failure_reason || 'Unknown reason',

@@ -36,7 +36,7 @@ export function generateAIPromptForBug(
   dossier += `    <project_id>${proj?.id || bug.project_id || ''}</project_id>\n`
   dossier += `    <api_key>${escapeXml(apiKeyStr)}</api_key>\n`
   dossier += `    <health_check_url>${escapeXml(hostUrl)}/api/health</health_check_url>\n`
-  dossier += `    <note>Do not execute manual unauthenticated cURL requests against /api/v1/bugs. Use the pre-configured npx devbug CLI commands provided below.</note>\n`
+  dossier += `    <note>Do not execute manual unauthenticated cURL requests against /api/v1/bugs. Use the pre-configured npx devbug-tracker CLI commands provided below.</note>\n`
   dossier += `  </agent_environment>\n\n`
 
   // 2. Project Metadata
@@ -94,14 +94,13 @@ export function generateAIPromptForBug(
   dossier += `  <agent_lifecycle_sync_protocol>\n`
   dossier += `    CRITICAL: You MUST execute the following CLI commands in background terminal to sync live progress with DevBug Tracker:\n\n`
   dossier += `    STEP 1 (ON START - before touching code):\n`
-  dossier += `    npx devbug start ${bug.id}${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}\n\n`
+  dossier += `    npx devbug-tracker start ${bug.id}${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}\n\n`
   dossier += `    STEP 2 (ON SUCCESS - after fixing and verification passes):\n`
-  dossier += `    npx devbug resolve ${bug.id} "FIXED: [brief description of what you changed]"${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}\n`
+  dossier += `    npx devbug-tracker resolve ${bug.id} "FIXED: [brief description of what you changed]"${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}\n`
   dossier += `  </agent_lifecycle_sync_protocol>\n\n`
-
   // 7. Agent Instructions
   dossier += `  <agent_instructions>\n`
-  dossier += `    1. Run STEP 1 command above (npx devbug start) to announce work in progress.\n`
+  dossier += `    1. Run STEP 1 command above (npx devbug-tracker start) to announce work in progress.\n`
   dossier += `    2. Start investigation strictly within <code_anchors> and <location_or_url>.\n`
   if (bug.failed_attempts && bug.failed_attempts.length > 0) {
     dossier += `    3. CRITICAL: Do NOT repeat approaches listed in <do_not_attempt_prior_failures>.\n`
@@ -114,7 +113,7 @@ export function generateAIPromptForBug(
   } else {
     dossier += `    ${bug.failed_attempts && bug.failed_attempts.length > 0 ? '5' : '4'}. Apply minimal surgical fix and verify there are no side effects.\n`
   }
-  dossier += `    ${bug.failed_attempts && bug.failed_attempts.length > 0 ? '6' : '5'}. Run STEP 2 command above (npx devbug resolve) to mark the issue resolved in the dashboard.\n`
+  dossier += `    ${bug.failed_attempts && bug.failed_attempts.length > 0 ? '6' : '5'}. Run STEP 2 command above (npx devbug-tracker resolve) to mark the issue resolved in the dashboard.\n`
   dossier += `  </agent_instructions>\n`
   dossier += `</bug_investigation_dossier>`
 
@@ -149,9 +148,8 @@ export function generateBulkAIPrompt(
   prompt += `    <project_id>${project?.id || bugs[0]?.project_id || ''}</project_id>\n`
   prompt += `    <api_key>${escapeXml(apiKeyStr)}</api_key>\n`
   prompt += `    <health_check_url>${escapeXml(hostUrl)}/api/health</health_check_url>\n`
-  prompt += `    <note>Do not execute manual unauthenticated cURL requests against /api/v1/bugs. Always use the pre-configured 'npx devbug' CLI commands in &lt;sync_start&gt; and &lt;sync_done&gt;.</note>\n`
+  prompt += `    <note>Do not execute manual unauthenticated cURL requests against /api/v1/bugs. Always use the pre-configured 'npx devbug-tracker' CLI commands in &lt;sync_start&gt; and &lt;sync_done&gt;.</note>\n`
   prompt += `  </agent_environment>\n\n`
-
   // 2. Execution Protocol & Triage Matrix (Directive-First: read before processing bug list)
   prompt += `  <agent_execution_protocol>\n`
   prompt += `    RULE 1 - MANDATORY TRIAGE PLAN (DO THIS FIRST BEFORE TOUCHING CODE):\n`
@@ -161,7 +159,7 @@ export function generateBulkAIPrompt(
   prompt += `       - Work cluster-by-cluster end-to-end to avoid jumping back and forth across files.\n`
   prompt += `    RULE 2 - STRICT SINGLE-ISSUE LIFECYCLE (NO BATCH CHAINING):\n`
   prompt += `       - Complete each bug sequentially: START -> INVESTIGATE -> SURGICAL FIX -> VERIFY -> RESOLVE.\n`
-  prompt += `       - Run <sync_start> CLI command (npx devbug start ...) immediately when you begin working on a specific bug.\n`
+  prompt += `       - Run <sync_start> CLI command (npx devbug-tracker start ...) immediately when you begin working on a specific bug.\n`
   prompt += `       - You MUST NOT combine CLI commands using chaining operators (&&, ;, ||).\n`
   prompt += `       - Only ONE bug may be in "in_progress" status at any given time.\n`
   prompt += `       - You MUST NOT begin or touch files for the next bug until the current bug is fully verified and marked resolved via <sync_done>.\n`
@@ -172,10 +170,10 @@ export function generateBulkAIPrompt(
     prompt += `    RULE 4 - VERIFICATION:\n`
     prompt += `       - Run '${escapeXml(project.test_command)}' to verify.\n`
     prompt += `    RULE 5 - COMPLETION SYNC:\n`
-    prompt += `       - Run <sync_done> CLI command (npx devbug resolve ...) immediately upon verified fix with brief root cause explanation.\n`
+    prompt += `       - Run <sync_done> CLI command (npx devbug-tracker resolve ...) immediately upon verified fix with brief root cause explanation.\n`
   } else {
     prompt += `    RULE 4 - COMPLETION SYNC:\n`
-    prompt += `       - Run <sync_done> CLI command (npx devbug resolve ...) immediately upon verified fix with brief root cause explanation.\n`
+    prompt += `       - Run <sync_done> CLI command (npx devbug-tracker resolve ...) immediately upon verified fix with brief root cause explanation.\n`
   }
   prompt += `  </agent_execution_protocol>\n\n`
 
@@ -204,8 +202,8 @@ export function generateBulkAIPrompt(
     if (bug.suspected_files && bug.suspected_files.length > 0) {
       prompt += `    <anchors>${escapeXml(bug.suspected_files.join(', '))}</anchors>\n`
     }
-    prompt += `    <sync_start>npx devbug start ${bug.id}${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}</sync_start>\n`
-    prompt += `    <sync_done>npx devbug resolve ${bug.id} "FIXED: [summary]"${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}</sync_done>\n`
+    prompt += `    <sync_start>npx devbug-tracker start ${bug.id}${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}</sync_start>\n`
+    prompt += `    <sync_done>npx devbug-tracker resolve ${bug.id} "FIXED: [summary]"${apiKeyStr ? ` --key=${apiKeyStr}` : ''} --url=${hostUrl}</sync_done>\n`
     prompt += `  </bug>\n`
   })
 

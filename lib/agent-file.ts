@@ -2,14 +2,14 @@ import { BugItem, Project } from '@/types'
 
 /**
  * Generates an agent-readable context JSON file that AI agents (Cursor, Claude Code, Windsurf, Aider)
- * can natively read directly from the project repository (`devbug.json`).
+ * can natively read directly from the project repository (`devbug-tracker.json`).
  */
 export function generateAgentContextJson(project: Project | null, bugs: BugItem[]): string {
   const openBugs = bugs.filter(b => b.status === 'open' || b.status === 'in_progress')
   const resolvedBugs = bugs.filter(b => b.status === 'resolved' || b.status === 'closed')
 
   const contextData = {
-    $schema: 'https://devbug.io/schema/agent-context-v1.json',
+    $schema: 'https://raw.githubusercontent.com/F41541/devbug-tracker/main/public/schema/agent-context-v1.json',
     app: 'DevBug Tracker',
     generated_at: new Date().toISOString(),
     project: {
@@ -59,12 +59,12 @@ export function generateAgentContextJson(project: Project | null, bugs: BugItem[
 }
 
 /**
- * Generates an agent-friendly markdown file (DEVBUG.md)
+ * Generates an agent-friendly markdown file (DEVBUG-TRACKER.md)
  */
 export function generateAgentContextMarkdown(project: Project | null, bugs: BugItem[]): string {
   const openBugs = bugs.filter(b => b.status === 'open' || b.status === 'in_progress')
   
-  let md = `# DevBug Context: ${project?.name || 'Project Workspace'}\n\n`
+  let md = `# DevBug Tracker Context: ${project?.name || 'Project Workspace'}\n\n`
   md += `> Generated on ${new Date().toLocaleString()} for AI Agent & Local Developer use.\n\n`
 
   if (project) {

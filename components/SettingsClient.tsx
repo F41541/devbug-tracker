@@ -85,18 +85,16 @@ export default function SettingsClient({
     if (typeof window !== 'undefined') {
       setOriginUrl(window.location.origin)
 
-      // Muat persistent local API secrets ke sessionSecrets
+      // Clean up any legacy plaintext secrets from localStorage
       try {
-        const storedSecrets = localStorage.getItem('devbug_local_api_secrets')
-        if (storedSecrets) {
-          setSessionSecrets(JSON.parse(storedSecrets))
-        }
+        localStorage.removeItem('devbug_tracker_local_api_secrets')
+        localStorage.removeItem('devbug_local_api_secrets')
       } catch {
         // ignore
       }
 
       if (isGuest && initialApiKeys.length === 0) {
-        const stored = localStorage.getItem('devbug_guest_api_keys')
+        const stored = localStorage.getItem('devbug_tracker_guest_api_keys') || localStorage.getItem('devbug_guest_api_keys')
         if (stored) {
           try {
             setApiKeys(JSON.parse(stored))
@@ -121,30 +119,20 @@ export default function SettingsClient({
         const h1 = (randHex() + randHex()).slice(0, 16)
         const h2 = randHex().slice(0, 6)
         const h3 = randHex().slice(0, 8)
-        const rawSecret = `devbug-${h1}-${h2}-${h3}`
+        const rawSecret = `devbug-tracker-${h1}-${h2}-${h3}`
         const newKey: ApiKey = {
           id: String(Date.now()),
           name: keyName.trim(),
-          key_prefix: `devbug-${h1.slice(0, 4)}...`,
+          key_prefix: `devbug-tracker-${h1.slice(0, 4)}...`,
           raw_key: rawSecret,
           created_at: new Date().toISOString(),
           last_used_at: null,
         }
         const updated = [newKey, ...apiKeys]
         setApiKeys(updated)
-        localStorage.setItem('devbug_guest_api_keys', JSON.stringify(updated))
+        localStorage.setItem('devbug_tracker_guest_api_keys', JSON.stringify(updated))
         setCreatedSecret(rawSecret)
         setSessionSecrets((prev) => ({ ...prev, [newKey.id]: rawSecret }))
-        if (typeof window !== 'undefined') {
-          try {
-            const stored = localStorage.getItem('devbug_local_api_secrets')
-            const secretMap = stored ? JSON.parse(stored) : {}
-            secretMap[newKey.id] = rawSecret
-            localStorage.setItem('devbug_local_api_secrets', JSON.stringify(secretMap))
-          } catch {
-            // ignore
-          }
-        }
         setKeyName('')
         showToast('API Key generated successfully (Guest Mode)', 'success')
       } else {
@@ -156,18 +144,8 @@ export default function SettingsClient({
         setApiKeys((prev) => [keyWithSecret, ...prev])
         setCreatedSecret(res.rawSecret)
         setSessionSecrets((prev) => ({ ...prev, [res.apiKey.id]: res.rawSecret }))
-        if (typeof window !== 'undefined') {
-          try {
-            const stored = localStorage.getItem('devbug_local_api_secrets')
-            const secretMap = stored ? JSON.parse(stored) : {}
-            secretMap[res.apiKey.id] = res.rawSecret
-            localStorage.setItem('devbug_local_api_secrets', JSON.stringify(secretMap))
-          } catch {
-            // ignore
-          }
-        }
         setKeyName('')
-        showToast('API Key generated successfully', 'success')
+        showToast('API Key generated successfully. Make sure to copy it now!', 'success')
       }
     } catch (err: any) {
       showToast(err.message || 'Failed to create API key', 'error')
@@ -185,7 +163,7 @@ export default function SettingsClient({
       if (isGuest) {
         const updated = apiKeys.filter((k) => k.id !== id)
         setApiKeys(updated)
-        localStorage.setItem('devbug_guest_api_keys', JSON.stringify(updated))
+        localStorage.setItem('devbug_tracker_guest_api_keys', JSON.stringify(updated))
         showToast('API Key revoked', 'info')
       } else {
         await deleteApiKey(id)
@@ -260,7 +238,7 @@ export default function SettingsClient({
     }
   }
 
-  const apiEndpoint = `${originUrl || 'https://your-devbug-domain.com'}/api/v1/bugs`
+  const apiEndpoint = `${originUrl || 'https://your-devbug-tracker-domain.com'}/api/v1/bugs`
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 overflow-hidden font-sans">
@@ -462,7 +440,7 @@ export default function SettingsClient({
                                 </span>
                               ) : (
                                 <span className="text-slate-500 dark:text-zinc-400 select-none font-mono">
-                                  devbug-********************************
+                                  devbug-tracker-********************************
                                 </span>
                               )
                             ) : (

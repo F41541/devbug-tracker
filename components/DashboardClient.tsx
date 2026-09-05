@@ -67,7 +67,7 @@ export default function DashboardClient({
   const [selectedStatus, setSelectedStatus] = useState<string>('')
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban')
 
-  // Navigation level: 'projects_hub' (root beranda) vs 'workspace' (kanban/list project)
+  // Navigation level: 'projects_hub' (all projects hub) vs 'workspace' (project workspace)
   const [viewLevel, setViewLevel] = useState<'projects_hub' | 'workspace'>(
     fixedWorkspace || initialSelectedProjectId ? 'workspace' : 'projects_hub'
   )
@@ -85,7 +85,7 @@ export default function DashboardClient({
 
       let loadedProjects = [defaultProject]
       try {
-        const savedProjects = localStorage.getItem('local_devbug_projects')
+        const savedProjects = localStorage.getItem('local_devbug_tracker_projects') || localStorage.getItem('local_devbug_projects')
         if (savedProjects) {
           const parsed = JSON.parse(savedProjects)
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -97,7 +97,7 @@ export default function DashboardClient({
       }
 
       setProjects(loadedProjects)
-      // Jaga selectedProject tetap null jika membuka beranda All Projects (Projects Hub)
+      // Keep selectedProject null when navigating to All Projects Hub
       const params = new URLSearchParams(window.location.search)
       const projectParam = params.get('project')
       if (projectParam) {
@@ -110,7 +110,7 @@ export default function DashboardClient({
       }
 
       try {
-        const savedBugs = localStorage.getItem('local_devbug_items')
+        const savedBugs = localStorage.getItem('local_devbug_tracker_items') || localStorage.getItem('local_devbug_items')
         if (savedBugs) {
           setBugs(JSON.parse(savedBugs))
         }
@@ -124,7 +124,7 @@ export default function DashboardClient({
   useEffect(() => {
     if (isGuest && typeof window !== 'undefined' && projects.length > 0) {
       try {
-        localStorage.setItem('local_devbug_projects', JSON.stringify(projects))
+        localStorage.setItem('local_devbug_tracker_projects', JSON.stringify(projects))
       } catch (e) {
         console.error('Failed to save projects to localStorage', e)
       }
@@ -135,7 +135,7 @@ export default function DashboardClient({
   useEffect(() => {
     if (isGuest && typeof window !== 'undefined') {
       try {
-        localStorage.setItem('local_devbug_items', JSON.stringify(bugs))
+        localStorage.setItem('local_devbug_tracker_items', JSON.stringify(bugs))
       } catch (e) {
         console.error('Failed to save to localStorage', e)
       }
@@ -274,39 +274,7 @@ export default function DashboardClient({
       )
       .subscribe()
 
-    // Resilient background sync polling (every 3s) for active workspaces
-    const pollInterval = setInterval(async () => {
-      try {
-        const query = supabase
-          .from('bug_items')
-          .select('*, project:projects(*), attachments(*)')
-          .order('order', { ascending: true })
-          .order('created_at', { ascending: false })
-
-        const { data: latestBugs } = await query
-        if (latestBugs && Array.isArray(latestBugs)) {
-          setBugs((prev) => {
-            // Quick check if there is any difference in length or status/updated_at
-            let hasChanged = prev.length !== latestBugs.length
-            if (!hasChanged) {
-              const prevMap = new Map(prev.map((b) => [b.id, `${b.status}-${b.investigation_state}-${b.updated_at}`]))
-              for (const nb of latestBugs) {
-                if (prevMap.get(nb.id) !== `${nb.status}-${nb.investigation_state}-${nb.updated_at}`) {
-                  hasChanged = true
-                  break
-                }
-              }
-            }
-            return hasChanged ? latestBugs : prev
-          })
-        }
-      } catch (err) {
-        // silent fail on network glitch
-      }
-    }, 3000)
-
     return () => {
-      clearInterval(pollInterval)
       supabase.removeChannel(channel)
     }
   }, [selectedBug?.id, selectedProject, fixedWorkspace, isGuest])

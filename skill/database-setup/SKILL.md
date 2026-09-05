@@ -5,31 +5,31 @@ description: Use when setting up, switching, or configuring the database backend
 
 # DevBug Tracker: Database Setup & Selection Guide
 
-Dokumen panduan ini dirancang untuk dibaca oleh **manusia (developer)** dan dieksekusi secara otomatis oleh **AI Coding Agent** saat pertama kali proyek ini di-clone (`git clone`).
+This guide is designed for both **developers** and **AI Coding Agents** when setting up or cloning the project for the first time (`git clone`).
 
-DevBug Tracker memiliki dua mode operasional:
-1. **Frontend Local Scratchpad (Zero Setup)**: Berjalan langsung di browser menggunakan `localStorage`. Pengunjung publik tanpa login dapat langsung mencatat bug tanpa memerlukan koneksi database backend.
-2. **PostgreSQL Backend (Full Features)**: Mengaktifkan multi-project workspace, UUID scoping, MCP Server untuk AI coding agent, dan persistent database. Pengguna dapat memilih antara **Supabase Cloud** atau **Self-Hosted PostgreSQL**.
+DevBug Tracker operates in two distinct modes:
+1. **Frontend Local Scratchpad (Zero Setup)**: Runs entirely client-side using `localStorage`. Visitors can capture and triage bugs immediately without any backend database or login.
+2. **PostgreSQL Backend (Full Features)**: Unlocks multi-project workspaces, UUID scoping, MCP Server for autonomous AI coding agents, and persistent database storage. Users can choose between **Supabase Cloud** or **Self-Hosted PostgreSQL**.
 
 ---
 
-## 2 Pilihan Database Backend
+## 2 Database Backend Options
 
-| Opsi Database | Cocok Untuk | Kelebihan | Kebutuhan Setup |
+| Database Option | Best For | Advantages | Setup Requirements |
 | :--- | :--- | :--- | :--- |
-| **Opsi 1: Supabase Cloud (Managed PostgreSQL)** | Solo vibe coder, cloud deployment tercepat. | Termasuk Auth, RLS, Storage Bucket screenshot, gratis tier luas. | Buat project di Supabase.com (2 menit). |
-| **Opsi 2: Self-Hosted PostgreSQL (Local Docker / VPS)** | Developer yang ingin 100% data di mesin lokal sendiri. | Tidak bergantung cloud, data tersimpan di laptop/server sendiri via Docker. | Butuh Docker & Supabase CLI. |
+| **Option 1: Supabase Cloud (Managed PostgreSQL)** | Solo developers, rapid cloud deployments. | Includes Auth, RLS, screenshot Storage Buckets, generous free tier. | Create a project on Supabase.com (2 minutes). |
+| **Option 2: Self-Hosted PostgreSQL (Local Docker / VPS)** | Developers requiring 100% data residency locally. | Zero cloud dependency, fully self-contained on local machine via Docker. | Requires Docker or Supabase CLI. |
 
 ---
 
-## Opsi 1: Supabase Cloud (Managed PostgreSQL)
+## Option 1: Supabase Cloud (Managed PostgreSQL)
 
-### Langkah Setup:
-1. Buka [https://supabase.com](https://supabase.com) dan buat proyek baru.
-2. Buka menu **SQL Editor** di dashboard Supabase.
-3. Salin seluruh isi file `supabase-schema.sql` dari repositori ini, tempel ke SQL Editor, lalu klik **Run**.
-   - Ini akan membuat tabel `projects`, `bug_items`, `attachments`, `api_keys`, policy RLS, dan bucket storage `bug-attachments`.
-4. Buka **Project Settings** -> **API** di dashboard Supabase, salin kredensial ke `.env.local`:
+### Setup Steps:
+1. Go to [https://supabase.com](https://supabase.com) and create a new project.
+2. Navigate to the **SQL Editor** in your Supabase dashboard.
+3. Copy the entire content of [`supabase-schema.sql`](./supabase-schema.sql) from this repository, paste it into the SQL Editor, and click **Run**.
+   - This provisions tables (`projects`, `bug_items`, `attachments`, `api_keys`), RLS policies, and the `bug-attachments` storage bucket.
+4. Go to **Project Settings** -> **API** in the Supabase dashboard, then copy your credentials into `.env.local`:
 
 ```env
 # .env.local
@@ -39,64 +39,72 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...<your-service-role-key>
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-5. Jalankan seed database untuk membuat akun admin default (`admin@devbug.io` / `123456`):
+5. Run database seeding to provision the default administrator account (`admin@devbug.io` / `123456`):
 ```bash
 npm run seed
 ```
 
-6. Jalankan server:
+6. Start the development server:
 ```bash
 npm run dev
 ```
 
 ---
 
-## Opsi 2: Self-Hosted PostgreSQL (Docker / Local-First)
+## Option 2: Self-Hosted PostgreSQL (Docker / Local-First)
 
-Jika Anda tidak ingin menggunakan cloud Supabase dan ingin database berjalan lokal di laptop/VPS menggunakan Docker container.
+If you prefer to run PostgreSQL locally on your machine or VPS using Docker.
 
-### Langkah Setup:
-1. Pastikan Docker daemon sudah aktif di sistem Anda.
-2. Pasang Supabase CLI jika belum ada:
+### Setup Steps:
+1. Ensure the Docker daemon is active on your machine.
+2. Launch the self-hosted stack via Docker Compose:
 ```bash
-npm install -g supabase
+docker compose up -d
 ```
-3. Inisialisasi dan jalankan stack PostgreSQL lokal:
+3. Alternatively, if using the Supabase CLI:
 ```bash
 supabase init
 supabase start
 ```
-4. Output terminal akan menampilkan kredensial lokal. Salin ke `.env.local`:
+4. Output credentials will be provided in the terminal. Copy them to `.env.local`:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<local-anon-key-dari-terminal>
-SUPABASE_SERVICE_ROLE_KEY=<local-service-role-key-dari-terminal>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<local-anon-key-from-terminal>
+SUPABASE_SERVICE_ROLE_KEY=<local-service-role-key-from-terminal>
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
-5. Terapkan skema database lokal:
+5. Apply the database schema:
 ```bash
 supabase db execute -f supabase-schema.sql
 ```
-6. Jalankan seed:
+6. Run database seeding:
 ```bash
 npm run seed
 ```
 
 ---
 
-## Instruksi Otomatis untuk AI Coding Agent
+## Quick Interactive Setup Wizard
 
-Ketika seorang pengguna meminta AI Agent untuk *"Setup database"* atau *"Inisialisasi proyek pertama kali"*:
+Run this command immediately after cloning:
+```bash
+npm run setup
+```
+The interactive CLI wizard will prompt you to choose between Supabase Cloud or Self-Hosted Docker, write `.env.local`, and optionally seed the default admin account.
 
-1. **Periksa Ketersediaan File `.env.local`**:
-   - Jika belum ada, buat dari template `.env.example`.
-2. **Tanyakan Pilihan Pengguna**:
-   - Pilihan A: **Supabase Cloud** (minta URL & API Key dari user).
-   - Pilihan B: **Self-Hosted PostgreSQL via Docker** (jalankan `supabase start`).
-3. **Verifikasi Skema**:
-   - Pastikan tabel `projects`, `bug_items`, dan `api_keys` sudah terbuat dari `supabase-schema.sql`.
-   - Pastikan tabel `projects` memiliki kolom `uuid UUID DEFAULT gen_random_uuid()`.
-4. **Eksekusi Seed**:
-   - Jalankan `npm run seed` untuk memastikan akun `admin@devbug.io` / `123456` tersedia.
-5. **Verifikasi Koneksi**:
-   - Jalankan `npm run dev` atau verifikasi endpoint `/api/v1/bugs`.
+---
+
+## Automated Instructions for AI Coding Agents
+
+When a user asks to *"Setup database"* or *"Initialize project"*:
+
+1. **Run Interactive Setup Wizard**:
+   - Execute `npm run setup` or generate `.env.local` based on user selection.
+2. **Verify Environment Configuration**:
+   - Ensure `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are populated.
+3. **Verify Database Schema**:
+   - Confirm tables `projects`, `bug_items`, and `api_keys` are created from `supabase-schema.sql`.
+4. **Execute Database Seed**:
+   - Run `npm run seed` to ensure the `admin@devbug.io` / `123456` account exists.
+5. **Verify Connection**:
+   - Run `npm run dev` and verify the `/api/v1/bugs` endpoint responds.
