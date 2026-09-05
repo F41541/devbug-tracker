@@ -24,6 +24,7 @@ import { AppSidebar } from '@/components/AppSidebar'
 import { Toast, ToastData, ToastType } from '@/components/ui/Toast'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/Button'
+import { Select } from '@/components/ui/Select'
 import { KanbanView, ListView, BugModal, BugDetailModal } from '@/components/bugs'
 import { ProjectManagerModal } from '@/components/projects'
 import { CopyAgentPromptModal } from '@/components/bugs/CopyAgentPromptModal'
@@ -33,6 +34,7 @@ import { logout } from '@/app/auth/actions'
 import { updateBugStatus, deleteBug } from '@/app/actions'
 import { createClient } from '@/lib/supabase/client'
 import { BugItem, BugStatus, BugSeverity, Project, ApiKey } from '@/types'
+import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 
 interface DashboardProps {
   initialBugs: BugItem[]
@@ -94,7 +96,17 @@ export default function DashboardClient({
       }
 
       setProjects(loadedProjects)
-      setSelectedProject(loadedProjects[0]?.id || null)
+      // Jaga selectedProject tetap null jika membuka beranda All Projects (Projects Hub)
+      const params = new URLSearchParams(window.location.search)
+      const projectParam = params.get('project')
+      if (projectParam) {
+        setSelectedProject(projectParam)
+        setViewLevel('workspace')
+      } else if (!fixedWorkspace && !initialSelectedProjectId) {
+        setSelectedProject(null)
+      } else {
+        setSelectedProject(loadedProjects[0]?.id || null)
+      }
 
       try {
         const savedBugs = localStorage.getItem('local_devbug_items')
@@ -341,17 +353,10 @@ export default function DashboardClient({
   }
 
   // Keyboard shortcut: Ctrl+Shift+B / Cmd+Shift+B triggers Single Bug Form
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'B' || e.key === 'b')) {
-        e.preventDefault()
-        setEditingBug(null)
-        setShowBugModal((prev) => !prev)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  useKeyboardShortcut('b', () => {
+    setEditingBug(null)
+    setShowBugModal((prev) => !prev)
+  })
 
   const statusLabels: Record<BugStatus, string> = {
     open: 'Open',
@@ -538,7 +543,7 @@ export default function DashboardClient({
                     href="/login"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition"
                   >
-                    <span>Sign In to Admin</span>
+                    <span>Sign In / Login</span>
                   </Link>
                 ) : (
                   /* Metrics Pill (Desktop) */
@@ -552,7 +557,7 @@ export default function DashboardClient({
                   </div>
                 )}
 
-                {/* Copy AI Prompt Button (Only visible on project workspace level: fixedWorkspace or selectedProject) */}
+                {/* Copy AI Prompt Button (Visible on project workspace level: fixedWorkspace or selectedProject) */}
                 {(fixedWorkspace || (viewLevel === 'workspace' && selectedProject !== null)) && (
                   <Button
                     type="button"
@@ -688,30 +693,32 @@ export default function DashboardClient({
                 </div>
 
                 {/* Filters & View Switcher */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <select
+                <div className="flex items-center gap-2 flex-nowrap shrink-0 overflow-x-auto">
+                  <Select
                     value={selectedSeverity}
                     onChange={(e) => setSelectedSeverity(e.target.value)}
-                    className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white text-slate-700 border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 focus:outline-none cursor-pointer"
+                    selectSize="sm"
+                    className="font-medium bg-white dark:bg-zinc-900"
                   >
                     <option value="">Severity: All</option>
                     <option value="critical">Critical</option>
                     <option value="high">High</option>
                     <option value="medium">Medium</option>
                     <option value="low">Low</option>
-                  </select>
+                  </Select>
 
-                  <select
+                  <Select
                     value={selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white text-slate-700 border border-slate-200 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 focus:outline-none cursor-pointer"
+                    selectSize="sm"
+                    className="font-medium bg-white dark:bg-zinc-900"
                   >
                     <option value="">Status: All</option>
                     <option value="open">Open</option>
                     <option value="in_progress">In Progress</option>
                     <option value="resolved">Resolved</option>
                     <option value="closed">Closed</option>
-                  </select>
+                  </Select>
 
                   {hasActiveFilters && (
                     <button

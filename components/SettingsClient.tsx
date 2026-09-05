@@ -26,7 +26,9 @@ import { AppSidebar } from '@/components/AppSidebar'
 import { Toast, ToastData, ToastType } from '@/components/ui/Toast'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { BugModal } from '@/components/bugs/BugModal'
+import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 
 interface SettingsClientProps {
   userId?: string
@@ -61,6 +63,8 @@ export default function SettingsClient({
   const [copiedItem, setCopiedItem] = useState<string | null>(null)
   const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({})
   const [sessionSecrets, setSessionSecrets] = useState<Record<string, string>>({})
+  const [keyToRevoke, setKeyToRevoke] = useState<ApiKey | null>(null)
+  const [isRevoking, setIsRevoking] = useState(false)
   // Account security
   const [email, setEmail] = useState(userEmail || '')
   const [currentEmailState, setCurrentEmailState] = useState(userEmail || '')
@@ -80,6 +84,16 @@ export default function SettingsClient({
     if (typeof window !== 'undefined') {
       setOriginUrl(window.location.origin)
 
+      // Muat persistent local API secrets ke sessionSecrets
+      try {
+        const storedSecrets = localStorage.getItem('devbug_local_api_secrets')
+        if (storedSecrets) {
+          setSessionSecrets(JSON.parse(storedSecrets))
+        }
+      } catch {
+        // ignore
+      }
+
       if (isGuest && initialApiKeys.length === 0) {
         const stored = localStorage.getItem('devbug_guest_api_keys')
         if (stored) {
@@ -93,16 +107,7 @@ export default function SettingsClient({
     }
   }, [isGuest, initialApiKeys])
 
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'B' || e.key === 'b')) {
-        e.preventDefault()
-        setShowBugModal((prev) => !prev)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  useKeyboardShortcut('b', () => setShowBugModal((prev) => !prev))
 
   async function handleCreateKey(e: React.FormEvent) {
     e.preventDefault()
@@ -170,10 +175,10 @@ export default function SettingsClient({
     }
   }
 
-  async function handleDeleteKey(id: string) {
-    if (!confirm('Are you sure you want to revoke this API key? This cannot be undone.')) {
-      return
-    }
+  async function handleConfirmRevoke() {
+    if (!keyToRevoke) return
+    setIsRevoking(true)
+    const id = keyToRevoke.id
 
     try {
       if (isGuest) {
@@ -186,8 +191,11 @@ export default function SettingsClient({
         setApiKeys((prev) => prev.filter((k) => k.id !== id))
         showToast('API Key revoked', 'info')
       }
+      setKeyToRevoke(null)
     } catch (err: any) {
       showToast(err.message || 'Failed to revoke API key', 'error')
+    } finally {
+      setIsRevoking(false)
     }
   }
 
@@ -427,32 +435,24 @@ export default function SettingsClient({
                 <div className="divide-y divide-slate-100 dark:divide-zinc-800/80">
                   {apiKeys.map((key) => {
                     const isRevealed = !!revealedKeys[key.id]
-                    const sessionSecret = sessionSecrets[key.id]
-                    const copyTarget = sessionSecret || key.key_prefix
+                    const sessionSecret = sessionSecrets[key.id] || key.raw_key
+                    const isSecretAvailable = !!sessionSecret
+                    const copyTarget = sessionSecret || key.raw_key || key.key_prefix
 
                     return (
                       <div
                         key={key.id}
                         className="p-4 space-y-2.5 hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors"
                       >
-                        {/* Baris 1: Judul Key & Revoke */}
+                        {/* Baris 1: Judul Key */}
                         <div className="flex items-center justify-between gap-3">
                           <span className="font-semibold text-xs text-slate-900 dark:text-zinc-100">
                             {key.name}
                           </span>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDeleteKey(key.id)}
-                            className="text-[11px] h-7 px-2.5 flex items-center gap-1.5"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                            <span>Revoke</span>
-                          </Button>
                         </div>
 
-                        {/* Baris 2: API Key Prefix / Secret if in session */}
-                        <div className="flex items-center gap-2 max-w-xl">
+                        {/* Baris 2: API Key Prefix / Secret if in session sejajar dengan Actions (Eye, Copy, Revoke) */}
+                        <div className="flex items-center gap-2">
                           <div className="flex-1 flex items-center justify-between px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 font-mono text-xs overflow-hidden">
                             {sessionSecret ? (
                               isRevealed ? (
@@ -503,6 +503,18 @@ export default function SettingsClient({
                               <Copy className="w-3.5 h-3.5" />
                             )}
                           </Button>
+
+                          {/* Tombol Revoke */}
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => setKeyToRevoke(key)}
+                            className="h-8 text-[11px] px-2.5 flex items-center gap-1.5 shrink-0"
+                            title="Revoke API Key"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Revoke</span>
+                          </Button>
                         </div>
 
                         {/* Baris 3: Metadata dibuat pada */}
@@ -527,7 +539,7 @@ export default function SettingsClient({
 
           {/* SECTION 2: Account Profile & Security (Only for Logged-in Admin) */}
           {!isGuest ? (
-            <section className="space-y-6 pt-6 border-t border-slate-200 dark:border-zinc-800">
+            <section className="space-y-6">
               <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-zinc-800">
                 <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 <h2 className="text-lg font-bold text-slate-900 dark:text-zinc-100">
@@ -656,6 +668,29 @@ export default function SettingsClient({
           )}
         </main>
       </div>
+
+      {/* Modal Konfirmasi Revoke API Key */}
+      {keyToRevoke && (
+        <ConfirmDialog
+          show={!!keyToRevoke}
+          title="Revoke API Key"
+          description="This action cannot be undone. AI agents using this key will lose access."
+          message={
+            <span>
+              Are you sure you want to revoke{' '}
+              <strong className="font-semibold text-slate-900 dark:text-zinc-100">
+                {keyToRevoke.name}
+              </strong>
+              ?
+            </span>
+          }
+          confirmLabel="Revoke Key"
+          variant="danger"
+          isPending={isRevoking}
+          onConfirm={handleConfirmRevoke}
+          onClose={() => setKeyToRevoke(null)}
+        />
+      )}
 
       {/* In-place Bug Modal */}
       {showBugModal && (

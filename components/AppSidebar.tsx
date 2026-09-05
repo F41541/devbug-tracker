@@ -56,9 +56,9 @@ export function AppSidebar({
             </div>
             <div>
               <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                DevBug
+                DevBug Tracker
               </h1>
-              <p className="text-[10px] text-slate-400 dark:text-zinc-500">Solo Developer Tracker</p>
+              <p className="text-[10px] text-slate-400 dark:text-zinc-500">Solo Dev Bug Fix</p>
             </div>
           </div>
         ) : (
@@ -68,9 +68,9 @@ export function AppSidebar({
             </div>
             <div>
               <h1 className="text-base font-bold tracking-tight text-slate-900 dark:text-zinc-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                DevBug
+                DevBug Tracker
               </h1>
-              <p className="text-[10px] text-slate-400 dark:text-zinc-500">Solo Developer Tracker</p>
+              <p className="text-[10px] text-slate-400 dark:text-zinc-500">Solo Dev Bug Fix</p>
             </div>
           </Link>
         )}
@@ -156,7 +156,7 @@ export function AppSidebar({
           </div>
           {projects.map((proj) => {
             const active =
-              (isRoot && selectedProject === proj.id) ||
+              (isRoot && viewLevel === 'workspace' && selectedProject === proj.id) ||
               (!isRoot && pathname === `/project/${proj.id}`)
             const projBugsCount = bugs.filter(
               (b) => b.project_id === proj.id && b.status !== 'resolved' && b.status !== 'closed'
@@ -260,7 +260,7 @@ export function AppSidebar({
               href="/login"
               className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold shadow-xs transition"
             >
-              Login
+              Sign In / Login
             </Link>
           </div>
         ) : (

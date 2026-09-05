@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { cn } from '@/lib/utils'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -41,13 +42,14 @@ export function Input({
         <input
           id={inputId}
           required={required}
-          className={`w-full ${
-            icon ? 'pl-9' : 'px-3.5'
-          } pr-3.5 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-zinc-950 border ${
+          className={cn(
+            'w-full pr-3.5 py-2 text-xs sm:text-sm bg-slate-50 dark:bg-zinc-950 border rounded-xl text-slate-900 dark:text-zinc-100 placeholder-slate-400 focus:outline-none focus:ring-2 transition-all',
+            icon ? 'pl-9' : 'px-3.5',
             error
               ? 'border-rose-500 focus:ring-rose-500/50'
-              : 'border-slate-200 dark:border-zinc-800 focus:ring-indigo-500/50'
-          } rounded-xl text-slate-900 dark:text-zinc-100 placeholder-slate-400 focus:outline-none focus:ring-2 transition-all ${className}`}
+              : 'border-slate-200 dark:border-zinc-800 focus:ring-indigo-500/50',
+            className
+          )}
           {...props}
         />
       </div>

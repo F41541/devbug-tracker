@@ -63,14 +63,14 @@ export function Modal({
               )}
               <div className="min-w-0">
                 {typeof title === 'string' ? (
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-zinc-100 truncate">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-zinc-100">
                     {title}
                   </h3>
                 ) : (
                   title
                 )}
                 {description && (
-                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-zinc-400 truncate">
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed mt-0.5">
                     {description}
                   </p>
                 )}

@@ -4,6 +4,8 @@ import React from 'react'
 import { Edit2, Trash2 } from 'lucide-react'
 import { BugItem, BugStatus } from '@/types'
 import { SeverityBadge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { Select } from '@/components/ui/Select'
 
 interface ListViewProps {
   bugs: BugItem[]
@@ -52,7 +54,7 @@ export function ListView({
                   <tr
                     key={bug.id}
                     onClick={() => onView(bug)}
-                    className="hover:bg-slate-50/80 dark:hover:bg-zinc-850/60 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
                   >
                     <td className="py-3 px-4 font-mono text-center text-slate-400 dark:text-zinc-500 font-semibold">
                       #{bugDisplayId}
@@ -88,38 +90,43 @@ export function ListView({
                     <SeverityBadge severity={bug.severity} />
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                    <select
+                    <Select
                       value={bug.status}
+                      selectSize="sm"
                       onChange={(e) => onStatusChange(bug.id, e.target.value as BugStatus)}
-                      className="text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded px-2 py-1 text-slate-700 dark:text-zinc-300 cursor-pointer"
+                      className="w-auto py-0.5 text-xs"
                     >
                       <option value="open">Open</option>
                       <option value="in_progress">In Progress</option>
                       <option value="resolved">Resolved</option>
                       <option value="closed">Closed</option>
-                    </select>
+                    </Select>
                   </td>
                   <td className="py-3 px-4 font-mono text-[11px] text-slate-500 dark:text-zinc-400 whitespace-nowrap">
                     {bug.environment || '-'}
                   </td>
                   <td className="py-3 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onEdit(bug)}
-                        className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400"
+                        className="p-1.5 h-auto text-slate-500 dark:text-zinc-400"
                         title="Edit Bug"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onDelete(bug)}
-                        className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400"
+                        className="p-1.5 h-auto text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/40"
                         title="Delete Bug"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

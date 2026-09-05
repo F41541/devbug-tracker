@@ -12,6 +12,7 @@ import {
 import { Project, BugItem } from '@/types'
 import { StatCard } from '@/components/ui/StatCard'
 import { ProjectCard } from '@/components/projects/ProjectCard'
+import { Button } from '@/components/ui/Button'
 
 interface ProjectsHubProps {
   projects: Project[]
@@ -97,14 +98,15 @@ export function ProjectsHub({
         </div>
 
         {!isGuest && (
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="sm"
             onClick={onOpenNewProjectModal}
-            className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center gap-1.5"
+            icon={<Plus className="w-3.5 h-3.5" />}
           >
-            <Plus className="w-3.5 h-3.5" />
             <span>New Project</span>
-          </button>
+          </Button>
         )}
       </div>
 

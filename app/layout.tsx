@@ -3,7 +3,7 @@ import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 
 export const metadata: Metadata = {
-  title: 'DevBug Tracker - Developer Issue & Bug Logger',
+  title: 'DevBug Tracker - Solo Dev Bug Fix',
   description: 'A developer-first bug tracker with Kanban, live markdown preview, stack trace logging, and clipboard screenshot paste.',
 }
 

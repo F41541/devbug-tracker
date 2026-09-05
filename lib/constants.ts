@@ -1,0 +1,1 @@
+export const DEFAULT_PROJECT_COLOR = '#6366f1'

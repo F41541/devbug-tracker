@@ -6,6 +6,8 @@ import { BugItem, BugSeverity, BugStatus, Project } from '@/types'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { Textarea } from '@/components/ui/Textarea'
+import { Select } from '@/components/ui/Select'
 import { extractSuspectedFiles } from '@/lib/parser'
 import { createBug, updateBug } from '@/app/actions'
 import { createClient } from '@/lib/supabase/client'
@@ -236,14 +238,11 @@ export function BugModal({
           {/* Project & Severity / Status */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1">
-                Project <span className="text-rose-500">*</span>
-              </label>
-              <select
+              <Select
+                label="Project"
                 required
                 value={projectId || ''}
                 onChange={(e) => setProjectId(e.target.value ? e.target.value : null)}
-                className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
               >
                 <option value="" disabled>
                   Select project...
@@ -253,39 +252,34 @@ export function BugModal({
                     {p.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1">
-                Severity
-              </label>
-              <select
+              <Select
+                label="Severity"
                 value={severity}
                 onChange={(e) => setSeverity(e.target.value as BugSeverity)}
-                className="w-full px-3 py-2 text-xs font-bold uppercase bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                className="font-bold uppercase"
               >
                 <option value="low">🟢 Low</option>
                 <option value="medium">🟡 Medium</option>
                 <option value="high">🟠 High</option>
                 <option value="critical">🔴 Critical</option>
-              </select>
+              </Select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1">
-                Status
-              </label>
-              <select
+              <Select
+                label="Status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as BugStatus)}
-                className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
               >
                 <option value="open">Open</option>
                 <option value="in_progress">In Progress</option>
                 <option value="resolved">Resolved</option>
                 <option value="closed">Closed</option>
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -300,18 +294,14 @@ export function BugModal({
 
           {/* 3. Error Explanation / What Happened */}
           <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
-                What Happened / Error Explanation
-              </label>
-              <span className="text-[10px] text-slate-400 dark:text-zinc-500">Paste logs / stack trace freely</span>
-            </div>
-            <textarea
+            <Textarea
+              label="What Happened / Error Explanation"
               rows={4}
               value={errorDescription}
               onChange={(e) => setErrorDescription(e.target.value)}
               placeholder="Explain what broke, error log, or stack trace..."
-              className="w-full p-3 font-mono text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-900 dark:text-zinc-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              helperText="Paste logs / stack trace freely"
+              className="font-mono"
             />
           </div>
 
@@ -338,15 +328,12 @@ export function BugModal({
 
           {/* 4. Expected Behavior */}
           <div className="space-y-1">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
-              Expected Behavior (Optional)
-            </label>
-            <textarea
+            <Textarea
+              label="Expected Behavior (Optional)"
               rows={2}
               value={expectedBehavior}
               onChange={(e) => setExpectedBehavior(e.target.value)}
               placeholder="What should happen instead? e.g. Should redirect to success page and create order record."
-              className="w-full p-3 text-xs bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl text-slate-900 dark:text-zinc-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
             />
           </div>
 

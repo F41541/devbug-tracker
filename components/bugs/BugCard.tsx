@@ -4,6 +4,7 @@ import React from 'react'
 import { Paperclip } from 'lucide-react'
 import { BugItem, BugStatus } from '@/types'
 import { SeverityBadge } from '@/components/ui/Badge'
+import { Select } from '@/components/ui/Select'
 
 interface BugCardProps {
   bug: BugItem
@@ -98,16 +99,17 @@ export function BugCard({
         </div>
 
         <div onClick={(e) => e.stopPropagation()}>
-          <select
+          <Select
             value={bug.status}
+            selectSize="sm"
             onChange={(e) => onStatusChange(bug.id, e.target.value as BugStatus)}
-            className="text-[11px] bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-slate-700 dark:text-zinc-300 focus:outline-none cursor-pointer"
+            className="w-auto text-[11px] py-0.5 px-1.5"
           >
             <option value="open">Open</option>
             <option value="in_progress">In Progress</option>
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
-          </select>
+          </Select>
         </div>
       </div>
     </div>

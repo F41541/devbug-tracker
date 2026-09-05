@@ -31,25 +31,29 @@ export function BugDetailModal({
 
   const headerActions = (
     <div className="flex items-center gap-1.5">
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         onClick={() => onEdit(bug)}
-        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition-colors"
+        className="p-1.5 h-auto text-slate-600 dark:text-zinc-300"
         title="Edit"
       >
         <Edit2 className="w-4 h-4" />
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         onClick={() => {
           onClose()
           onDelete(bug)
         }}
-        className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 transition-colors"
+        className="p-1.5 h-auto text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/40"
         title="Delete"
       >
         <Trash2 className="w-4 h-4" />
-      </button>
+      </Button>
     </div>
   )
 

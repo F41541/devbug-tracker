@@ -9,6 +9,7 @@ import { ProjectManagerModal } from '@/components/projects'
 import { BugModal } from '@/components/bugs/BugModal'
 import { ApiKeyPromptModal } from '@/components/integrations/ApiKeyPromptModal'
 import { Toast, ToastData, ToastType } from '@/components/ui/Toast'
+import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 
 interface ProjectsPageClientProps {
   initialProjects: Project[]
@@ -37,16 +38,7 @@ export function ProjectsPageClient({
     setTimeout(() => setToast(null), 3000)
   }
 
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'B' || e.key === 'b')) {
-        e.preventDefault()
-        setShowBugModal((prev) => !prev)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  useKeyboardShortcut('b', () => setShowBugModal((prev) => !prev))
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100 flex selection:bg-indigo-500 selection:text-white transition-colors">

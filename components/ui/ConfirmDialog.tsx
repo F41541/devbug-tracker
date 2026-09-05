@@ -3,6 +3,7 @@
 import React from 'react'
 import { Trash2, AlertTriangle } from 'lucide-react'
 import { Modal } from './Modal'
+import { Button } from './Button'
 
 interface ConfirmDialogProps {
   show: boolean
@@ -20,7 +21,7 @@ interface ConfirmDialogProps {
 export function ConfirmDialog({
   show,
   title,
-  description = 'This action cannot be undone.',
+  description,
   message,
   confirmLabel = 'Delete',
   cancelLabel = 'Cancel',
@@ -42,34 +43,40 @@ export function ConfirmDialog({
         )
       }
       title={title}
-      description={description}
     >
-      <div className="p-5 sm:p-6 space-y-4">
-        <div className="text-xs sm:text-sm text-slate-600 dark:text-zinc-300 bg-slate-50 dark:bg-zinc-950/60 p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800">
-          {message}
+      <div className="p-5 sm:p-6 space-y-5">
+        <div className="space-y-1.5">
+          <div className="text-sm text-slate-700 dark:text-zinc-200 font-medium leading-relaxed">
+            {message}
+          </div>
+          {description && (
+            <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
+              {description}
+            </p>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 pt-2">
-          <button
+        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-zinc-800/80">
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={isPending}
-            className="py-2.5 px-4 text-xs font-semibold text-slate-700 dark:text-zinc-300 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 rounded-xl transition-colors disabled:opacity-50"
+            className="px-4"
           >
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant={variant === 'danger' ? 'danger' : 'primary'}
+            size="sm"
             onClick={onConfirm}
-            disabled={isPending}
-            className={`py-2.5 px-4 text-xs font-semibold text-white rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 ${
-              variant === 'danger'
-                ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30'
-                : 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/30'
-            }`}
+            loading={isPending}
+            className="px-4"
           >
-            {isPending ? 'Processing...' : confirmLabel}
-          </button>
+            {confirmLabel}
+          </Button>
         </div>
       </div>
     </Modal>

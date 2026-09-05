@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { cn } from '@/lib/utils'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline'
 export type ButtonSize = 'sm' | 'md' | 'lg'
@@ -40,7 +41,12 @@ export function Button({
   return (
     <button
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
+      className={cn(
+        'inline-flex items-center justify-center font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed select-none',
+        VARIANT_CLASSES[variant],
+        SIZE_CLASSES[size],
+        className
+      )}
       {...props}
     >
       {loading ? (
