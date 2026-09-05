@@ -29,9 +29,6 @@ yarn-error.log*
 # Vercel
 .vercel
 
-# Playwright MCP artifacts
-.playwright-mcp/
-
 # Local Notes & Brainstorming
 Brainstroming.md
 *.brainstorming.md

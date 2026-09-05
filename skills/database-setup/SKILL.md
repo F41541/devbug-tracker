@@ -9,7 +9,7 @@ This guide is designed for both **developers** and **AI Coding Agents** when set
 
 DevBug Tracker operates in two distinct modes:
 1. **Frontend Local Scratchpad (Zero Setup)**: Runs entirely client-side using `localStorage`. Visitors can capture and triage bugs immediately without any backend database or login.
-2. **PostgreSQL Backend (Full Features)**: Unlocks multi-project workspaces, UUID scoping, MCP Server for autonomous AI coding agents, and persistent database storage. Users can choose between **Supabase Cloud** or **Self-Hosted PostgreSQL**.
+2. **PostgreSQL Backend (Full Features)**: Unlocks multi-project workspaces, UUID scoping, autonomous CLI sync for AI coding agents, and persistent database storage. Users can choose between **Supabase Cloud** or **Self-Hosted PostgreSQL**.
 
 ---
 

@@ -1,0 +1,12 @@
+---
+description: First-time database setup and project onboarding guide for DevBug Tracker
+globs: *
+---
+
+# Database Setup Onboarding
+
+When working on a fresh clone or unconfigured `.env.local`:
+1. Ask the user:
+   - **[1] Supabase Cloud (Managed PostgreSQL)**
+   - **[2] Self-Hosted Local PostgreSQL / Docker (Local-first)**
+2. Follow the detailed protocol in `skills/database-setup/SKILL.md` or run `npm run setup`.

@@ -10,11 +10,9 @@
     "start": "next start",
     "lint": "tsc --noEmit",
     "setup": "node scripts/setup.mjs",
-    "mcp": "node bin/mcp-server.mjs",
     "seed": "node --env-file=.env.local scripts/seed.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.1",
     "@types/dompurify": "^3.0.5",
