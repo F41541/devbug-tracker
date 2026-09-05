@@ -32,7 +32,7 @@ export function ProjectManagerModal({
   const [desc, setDesc] = useState(project?.description || '')
   const [repoUrl, setRepoUrl] = useState(project?.repository_url || '')
   const [techStack, setTechStack] = useState(project?.tech_stack?.join(', ') || '')
-  const [testCommand, setTestCommand] = useState(project?.test_command || 'npm test')
+  const [testCommand, setTestCommand] = useState(project ? (project.test_command ?? '') : 'npm test')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function ProjectManagerModal({
       setDesc(project?.description || '')
       setRepoUrl(project?.repository_url || '')
       setTechStack(project?.tech_stack?.join(', ') || '')
-      setTestCommand(project?.test_command || 'npm test')
+      setTestCommand(project ? (project.test_command ?? '') : 'npm test')
     }
   }, [show, project])
 
@@ -69,7 +69,7 @@ export function ProjectManagerModal({
             description: desc.trim() || undefined,
             repository_url: repoUrl.trim() || undefined,
             tech_stack: stackArray,
-            test_command: testCommand.trim() || undefined,
+            test_command: testCommand.trim() ? testCommand.trim() : null,
           }
           onProjectsChange((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
           onClose()
@@ -84,7 +84,7 @@ export function ProjectManagerModal({
             description: desc.trim() || undefined,
             repository_url: repoUrl.trim() || undefined,
             tech_stack: stackArray,
-            test_command: testCommand.trim() || undefined,
+            test_command: testCommand.trim() ? testCommand.trim() : null,
           }
           onProjectsChange((prev) => [...prev, created])
           onClose()
@@ -100,7 +100,7 @@ export function ProjectManagerModal({
           description: desc.trim() || undefined,
           repository_url: repoUrl.trim() || undefined,
           tech_stack: stackArray,
-          test_command: testCommand.trim() || undefined,
+          test_command: testCommand.trim() ? testCommand.trim() : null,
         })
         onProjectsChange((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
         onClose()
@@ -112,7 +112,7 @@ export function ProjectManagerModal({
           description: desc.trim() || undefined,
           repository_url: repoUrl.trim() || undefined,
           tech_stack: stackArray,
-          test_command: testCommand.trim() || undefined,
+          test_command: testCommand.trim() ? testCommand.trim() : null,
         })
         onProjectsChange((prev) => [...prev, created])
         onClose()

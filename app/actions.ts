@@ -379,7 +379,7 @@ export async function createProject(rawFormData: {
     repository_url: formData.repository_url || null,
     tech_stack: formData.tech_stack || [],
     package_manager: formData.package_manager || 'npm',
-    test_command: formData.test_command || 'npm test',
+    test_command: formData.test_command?.trim() ? formData.test_command.trim() : null,
   }
 
   const { data, error } = await supabase
@@ -416,7 +416,7 @@ export async function updateProject(id: string, rawFormData: {
 
   const formData = parsed.data
 
-  const { data, error } = await supabase
+    const { data, error } = await supabase
     .from('projects')
     .update({
       name: formData.name,
@@ -425,7 +425,7 @@ export async function updateProject(id: string, rawFormData: {
       repository_url: formData.repository_url || null,
       tech_stack: formData.tech_stack || [],
       package_manager: formData.package_manager || 'npm',
-      test_command: formData.test_command || 'npm test',
+      test_command: formData.test_command?.trim() ? formData.test_command.trim() : null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)

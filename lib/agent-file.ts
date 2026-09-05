@@ -18,7 +18,7 @@ export function generateAgentContextJson(project: Project | null, bugs: BugItem[
       slug: project?.slug || 'project',
       repository_url: project?.repository_url || null,
       tech_stack: project?.tech_stack || [],
-      test_command: project?.test_command || 'npm test',
+      test_command: project?.test_command || null,
     },
     metrics: {
       total_active_issues: openBugs.length,
@@ -50,7 +50,9 @@ export function generateAgentContextJson(project: Project | null, bugs: BugItem[
     agent_instructions: [
       '1. Review active_issues sorted by severity (critical first).',
       '2. Inspect suspected_files and fix_hint before scanning the entire codebase.',
-      '3. Run test_command to verify fixes before committing.',
+      ...(project?.test_command
+        ? ['3. Run test_command to verify fixes before committing.']
+        : []),
       '4. Keep code changes minimal and surgical.',
     ],
   }
