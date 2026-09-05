@@ -50,7 +50,12 @@ export function CopyAgentPromptModal({
   // Find default active key from raw_key or key_prefix
   useEffect(() => {
     if (currentApiKeys.length > 0) {
+      // Find the first key that has a raw_key, or fallback to first key
+      const keyWithSecret = currentApiKeys.find(
+        (k) => k.raw_key && !k.raw_key.endsWith('...')
+      )
       const activeSecret =
+        keyWithSecret?.raw_key ||
         currentApiKeys[0].raw_key ||
         (currentApiKeys[0].key_prefix.endsWith('...') ? '' : currentApiKeys[0].key_prefix)
 
@@ -163,7 +168,10 @@ export function CopyAgentPromptModal({
                   className="text-xs font-mono px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 text-slate-800 dark:text-zinc-200"
                 >
                   {currentApiKeys.map((k) => (
-                    <option key={k.id} value={k.raw_key || k.key_prefix}>
+                    <option
+                      key={k.id}
+                      value={k.raw_key || (k.key_prefix.endsWith('...') ? '' : k.key_prefix)}
+                    >
                       {k.name} ({k.key_prefix.slice(0, 10)}...)
                     </option>
                   ))}

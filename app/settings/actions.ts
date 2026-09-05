@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { ApiKey } from '@/types'
 import crypto from 'crypto'
+import { encryptSecret, decryptSecret } from '@/lib/crypto'
 
 async function requireAuth() {
   const supabase = await createClient()
@@ -24,7 +25,7 @@ export async function getApiKeys(): Promise<ApiKey[]> {
   
   const { data, error } = await supabase
     .from('api_keys')
-    .select('id, name, key_prefix, created_at, last_used_at')
+    .select('id, name, key_prefix, raw_key, created_at, last_used_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -33,7 +34,22 @@ export async function getApiKeys(): Promise<ApiKey[]> {
     return []
   }
 
-  return (data || []) as ApiKey[]
+  const keys: ApiKey[] = (data || []).map((item: any) => {
+    let rawKey: string | null = null
+    if (item.raw_key) {
+      rawKey = decryptSecret(item.raw_key) || item.raw_key
+    }
+    return {
+      id: item.id,
+      name: item.name,
+      key_prefix: item.key_prefix,
+      raw_key: rawKey,
+      created_at: item.created_at,
+      last_used_at: item.last_used_at,
+    }
+  })
+
+  return keys
 }
 
 export async function createApiKey(name: string): Promise<{ apiKey: ApiKey; rawSecret: string }> {
@@ -50,8 +66,9 @@ export async function createApiKey(name: string): Promise<{ apiKey: ApiKey; rawS
   const keyPrefix = `devbug-tracker-${hex1.slice(0, 4)}...`
   
   const keyHash = crypto.createHash('sha256').update(rawSecret).digest('hex')
+  const encryptedRawSecret = encryptSecret(rawSecret)
 
-  // Insert with required user_id
+  // Insert with required user_id and encrypted raw_key
   const { data, error } = await supabase
     .from('api_keys')
     .insert({
@@ -59,6 +76,7 @@ export async function createApiKey(name: string): Promise<{ apiKey: ApiKey; rawS
       name: name.trim(),
       key_hash: keyHash,
       key_prefix: keyPrefix,
+      raw_key: encryptedRawSecret,
     })
     .select('id, name, key_prefix, created_at, last_used_at')
     .single()

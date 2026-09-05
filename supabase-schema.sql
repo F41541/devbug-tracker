@@ -77,6 +77,7 @@ CREATE TABLE public.api_keys (
     name VARCHAR(255) NOT NULL,
     key_hash VARCHAR(255) NOT NULL UNIQUE,
     key_prefix VARCHAR(50) NOT NULL,
+    raw_key TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     last_used_at TIMESTAMPTZ
 );
